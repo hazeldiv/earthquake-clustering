@@ -1,0 +1,60 @@
+from fastapi import FastAPI, BackgroundTasks, Query
+from fastapi.middleware.cors import CORSMiddleware
+import os
+import uvicorn
+from backend.cluster_processor import get_clusters, compute_clusters
+
+app = FastAPI(
+    title="Indonesia Earthquake Clustering API",
+    description="Backend API for clustering earthquakes > 5 magnitude in Indonesia",
+    version="1.0.0"
+)
+
+# Enable CORS for Next.js frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For production, specify the actual frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global in-memory cache for fast loading
+_cache = None
+
+@app.on_event("startup")
+def startup_event():
+    global _cache
+    print("[API] Warming up cache...")
+    # Load from cache file (or compute if not exists)
+    _cache = get_clusters(force_recompute=False)
+    print(f"[API] Cache loaded with {len(_cache)} clusters.")
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.get("/api/clusters")
+def get_earthquake_clusters(recompute: bool = Query(False, description="Force recomputation of clusters")):
+    global _cache
+    if recompute:
+        print("[API] Force recompute requested...")
+        _cache = compute_clusters()
+    elif _cache is None:
+        _cache = get_clusters(force_recompute=False)
+    return _cache
+
+@app.post("/api/clusters/recompute")
+def trigger_recompute(background_tasks: BackgroundTasks):
+    """Trigger recomputation of clusters in the background and update the cache."""
+    def recompute_task():
+        global _cache
+        print("[API] Background recomputation started...")
+        _cache = compute_clusters()
+        print("[API] Background recomputation finished.")
+        
+    background_tasks.add_task(recompute_task)
+    return {"status": "processing", "message": "Recomputation started in the background."}
+
+if __name__ == "__main__":
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

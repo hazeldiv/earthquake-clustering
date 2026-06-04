@@ -44,6 +44,9 @@ NEIGHBOR_DISTANCE = 0.3  # Minimum neighbor distance in degrees
 MIN_EVENTS = 5           # Minimum earthquakes required
 YEAR_SPAN = 10           # Years for temporal window
 
+# B-Spline smoothing - higher = smoother curves
+SMOOTH_FACTOR = 50      # Number of points to sample the spline
+
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -132,6 +135,39 @@ def filter_scattered_points(df, neighbor_distance, min_neighbors=3):
             keep_mask[i] = True
 
     return df[keep_mask].copy()
+
+
+def smooth_polygon_bspline(vertices, num_points=50):
+    """
+    Smooth a polygon's vertices using B-Spline interpolation.
+
+    Args:
+        vertices: Array of (x, y) points forming the polygon
+        num_points: Number of points to sample from the spline
+
+    Returns:
+        Smoothed polygon vertices as (x, y) array
+    """
+    from scipy.interpolate import splprep, splev
+
+    if len(vertices) < 4:
+        return vertices  # Not enough points for smoothing
+
+    # Close the polygon if not already closed
+    if not np.allclose(vertices[0], vertices[-1]):
+        vertices = np.vstack([vertices, vertices[0]])
+
+    # Transpose for easier handling
+    x, y = vertices[:, 0], vertices[:, 1]
+
+    # Fit a cubic B-spline (k=3) with smoothing
+    try:
+        tck, _ = splprep([x, y], s=len(x)*0.5, k=min(3, len(x)-1))
+        u_new = np.linspace(0, 1, num_points)
+        smooth_x, smooth_y = splev(u_new, tck)
+        return np.column_stack([smooth_x, smooth_y])
+    except:
+        return vertices  # Fallback to original if smoothing fails
 
 
 def has_temporal_density(events, min_events=3, year_span=10):
@@ -318,7 +354,7 @@ def main():
     # Generate colors for clusters
     colors = plt.cm.tab20(np.linspace(0, 1, final_k))
 
-    # Draw ConvexHull for each cluster
+    # Draw ConvexHull for each cluster with B-Spline smoothing
     hull_count = 0
     for cluster_id in range(final_k):
         cluster_data = df_filtered[df_filtered['cluster'] == cluster_id]
@@ -335,11 +371,14 @@ def main():
             hull_points = points[hull.vertices]
             hull_vertices = np.vstack([hull_points, hull_points[0]])  # Close polygon
 
-            # Fill and outline the cluster
+            # Apply B-Spline smoothing to the polygon
+            smooth_vertices = smooth_polygon_bspline(hull_vertices, num_points=SMOOTH_FACTOR)
+
+            # Fill and outline the cluster with smoothed boundary
             color = colors[cluster_id % len(colors)]
-            ax.fill(hull_vertices[:, 0], hull_vertices[:, 1],
+            ax.fill(smooth_vertices[:, 0], smooth_vertices[:, 1],
                     color=color, alpha=0.3, zorder=3)
-            ax.plot(hull_vertices[:, 0], hull_vertices[:, 1],
+            ax.plot(smooth_vertices[:, 0], smooth_vertices[:, 1],
                     color=color, linewidth=1.5, alpha=0.8, zorder=4)
 
             hull_count += 1
