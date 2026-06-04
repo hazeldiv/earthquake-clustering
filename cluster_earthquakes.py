@@ -23,9 +23,9 @@ from scipy.spatial import ConvexHull
 DATA_PATH = './dataset/katalog_gempa_v2_cleaned.tsv'
 OUTPUT_MAP = 'cluster_map.png'
 ELBOW_PLOT = 'elbow_plot.png'
-SAMPLE_RATE = 2  # Every 2nd row
-K_MIN = 16
-K_MAX = 32
+SAMPLE_RATE = 1  # Every 2nd row
+K_MIN = 72
+K_MAX = 96
 RANDOM_STATE = 42
 
 # Map extent (Indonesia bounding box)
@@ -34,7 +34,7 @@ LAT_MIN, LAT_MAX = -12, 6
 
 # Magnitude and depth thresholds - earthquakes must meet these to be included
 MAG_THRESHOLD = 5.0   # Minimum magnitude
-DEPTH_THRESHOLD = 75.0  # Maximum depth (km) - shallow earthquakes only
+DEPTH_THRESHOLD = 50.0  # Maximum depth (km) - shallow earthquakes only
 
 # Scatter filtering - point must have at least one neighbor within this distance (degrees)
 # ~1 degree ≈ 111km at equator, so 0.3 = ~33km radius
@@ -57,29 +57,27 @@ def log(msg):
 def detect_elbow(inertias):
     """
     Find the elbow point in inertia values.
-    Uses percentage decrease to bias toward more clusters.
+    Modified to bias toward higher K (more clusters).
     """
     inertias = np.array(inertias)
     n = len(inertias)
 
-    # Find first point where relative decrease becomes small (< 5% improvement)
-    # This biases toward higher K (more clusters)
-    threshold = 0.05  # 5% relative decrease threshold
+    # Bias toward higher K by using a very low threshold
+    # This means we go further into the range before stopping
+    threshold = 0.02  # 2% - very low to get more clusters
 
     for i in range(1, n - 1):
-        # Calculate relative decrease
         relative_decrease = (inertias[i - 1] - inertias[i]) / inertias[i - 1]
 
         if relative_decrease < threshold:
-            # Found the elbow - return this K
-            best_k = i + K_MIN  # Adjust for range offset
+            best_k = i + K_MIN
             log(f"Elbow detection: relative decrease at K={i+K_MIN} is {relative_decrease:.1%} < {threshold:.1%}")
             log(f"Elbow detection: best K = {best_k}")
             return best_k
 
-    # If no clear elbow, return the middle of the range
-    best_k = (K_MIN + K_MAX) // 2
-    log(f"Elbow detection: no clear elbow found, using middle K = {best_k}")
+    # If no clear elbow found, return higher end of range
+    best_k = K_MAX - 2  # Near the top of the range
+    log(f"Elbow detection: no clear elbow, using near-max K = {best_k}")
     return best_k
 
 
