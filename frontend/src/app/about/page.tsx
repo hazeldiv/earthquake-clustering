@@ -71,7 +71,7 @@ export default function AboutPage() {
 
       {/* Main Content Container */}
       <div className="w-full max-w-4xl mx-auto px-6 py-12 z-10 flex flex-col gap-8">
-        
+
         {/* Title Block */}
         <div className="flex flex-col gap-3">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight uppercase bg-gradient-to-r from-cyan-400 via-sky-300 to-purple-400 bg-clip-text text-transparent">
@@ -86,31 +86,28 @@ export default function AboutPage() {
         <div className="flex border-b border-white/5 gap-6 mt-2">
           <button
             onClick={() => setActiveTab("how-it-works")}
-            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${
-              activeTab === "how-it-works"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${activeTab === "how-it-works"
+              ? "border-cyan-400 text-cyan-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             How it works
           </button>
           <button
             onClick={() => setActiveTab("metrics")}
-            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${
-              activeTab === "metrics"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${activeTab === "metrics"
+              ? "border-cyan-400 text-cyan-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             Model Evaluation
           </button>
           <button
             onClick={() => setActiveTab("eda")}
-            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${
-              activeTab === "eda"
-                ? "border-cyan-400 text-cyan-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
+            className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${activeTab === "eda"
+              ? "border-cyan-400 text-cyan-400"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
           >
             Exploratory Data Analysis
           </button>
@@ -118,13 +115,13 @@ export default function AboutPage() {
 
         {/* Tab Contents */}
         <div className="flex-1 flex flex-col gap-8 min-h-[300px]">
-          
+
           {/* TAB 1: HOW IT WORKS */}
           {activeTab === "how-it-works" && (
             <div className="flex flex-col gap-10 animate-fadeIn duration-500">
               {/* Steps Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* Step 1: Data Filtering */}
                 <div className="p-6 rounded-2xl glass flex flex-col gap-4 border-white/5 hover:border-cyan-500/20 transition-all duration-300">
                   <div className="w-10 h-10 rounded-xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-center">
@@ -132,9 +129,9 @@ export default function AboutPage() {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Step 1</div>
-                    <h3 className="text-base font-bold text-slate-200">Data Filtering & Querying</h3>
+                    <h3 className="text-base font-bold text-slate-200">Data Preprocessing & Outlier Filtering</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-1">
-                      The database gathers historical seismic data in Indonesia. It filters for significant events with a **magnitude of 5.0 or greater** occurring over the **last 10 years**. These events represent potentially damaging earthquakes that highlight current geological strain.
+                      The pipeline pre-cleans the raw catalog to remove duplicate records and spatial anomalies. It then filters out isolated seismic events that are <strong className="font-semibold text-slate-200">too distant from one another</strong> (outliers with fewer than 3 neighbors within a given radius), ensuring only active, concentrated seismic zones are fed into the clustering algorithm.
                     </p>
                   </div>
                 </div>
@@ -148,7 +145,7 @@ export default function AboutPage() {
                     <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Step 2</div>
                     <h3 className="text-base font-bold text-slate-200">K-Means Spatial Clustering</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-1">
-                      Using the spatial coordinates (latitude and longitude), the backend executes a **K-Means clustering algorithm**. This groups geographically dense points together, partitioning the earthquake data into $K$ distinct seismic clusters representing active fault systems or subduction zones.
+                      Using the spatial coordinates (latitude and longitude), the backend executes a <strong className="font-semibold text-slate-200">K-Means clustering algorithm</strong>. This groups geographically dense points together, partitioning the earthquake data into <span className="italic font-semibold text-purple-400">K</span> distinct seismic clusters representing active fault systems or subduction zones.
                     </p>
                   </div>
                 </div>
@@ -162,7 +159,7 @@ export default function AboutPage() {
                     <div className="text-[10px] text-pink-400 font-bold uppercase tracking-wider">Step 3</div>
                     <h3 className="text-base font-bold text-slate-200">B-Spline Boundary Interpolation</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-1">
-                      To visualize the danger zones, a **Convex Hull** is computed around the outer points of each cluster. The boundary is then smoothed using a **B-Spline interpolation algorithm**. This creates continuous, rounded hazard contours instead of rigid, jagged polygons, representing spatial hazard probability.
+                      To visualize the danger zones, a <strong className="font-semibold text-slate-200">Convex Hull</strong> is computed around the outer points of each cluster. The boundary is then smoothed using a <strong className="font-semibold text-slate-200">B-Spline interpolation algorithm</strong>. This creates continuous, rounded hazard contours instead of rigid, jagged polygons, representing spatial hazard probability.
                     </p>
                   </div>
                 </div>
@@ -176,7 +173,7 @@ export default function AboutPage() {
                     <div className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Step 4</div>
                     <h3 className="text-base font-bold text-slate-200">Administrative Spatial Joins</h3>
                     <p className="text-slate-400 text-xs leading-relaxed mt-1">
-                      Finally, a **spatial join (intersection)** is performed between the smoothed cluster boundaries and the official boundary shapes of 394 Indonesian districts (**Kabupaten/Kota**) and **Provinces**. This determines exactly which local administrations fall within high-risk seismic sectors.
+                      Finally, a <strong className="font-semibold text-slate-200">spatial join (intersection)</strong> is performed between the smoothed cluster boundaries and the official boundary shapes of 394 Indonesian districts (<strong className="font-semibold text-slate-200">Kabupaten/Kota</strong>) and <strong className="font-semibold text-slate-200">Provinces</strong>. This determines exactly which local administrations fall within high-risk seismic sectors.
                     </p>
                   </div>
                 </div>
@@ -195,10 +192,26 @@ export default function AboutPage() {
                   <div className="p-6 rounded-2xl bg-white/2 border border-white/5 flex flex-col gap-3">
                     <h4 className="text-sm font-bold text-slate-300">1. Spatial Distance Optimization</h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      The K-Means algorithm partitions the $N$ observations into $K$ clusters by minimizing the within-cluster sum of squares (WCSS). The distance metric used is the **Haversine distance** (accounting for Earth's curvature) to ensure accuracy near equatorial coordinates.
+                      The K-Means algorithm partitions the <span className="italic font-semibold text-cyan-400">N</span> observations into <span className="italic font-semibold text-cyan-400">K</span> clusters by minimizing the within-cluster sum of squares (WCSS). The distance metric used is the <strong className="font-semibold text-slate-200">Haversine distance</strong> (accounting for Earth's curvature) to ensure accuracy near equatorial coordinates.
                     </p>
-                    <div className="p-4 rounded-xl bg-slate-950/50 border border-white/5 font-mono text-[11px] text-slate-300 mt-2 overflow-x-auto">
-                      {"minimize WCSS = \u2211_{i=1}^{K} \u2211_{x \u2208 S_i} || x - \u03bc_i ||\u00b2"}
+                    <div className="flex flex-col items-center justify-center p-6 rounded-xl bg-slate-950/50 border border-white/5 font-mono text-[13px] text-slate-300 mt-3 gap-2">
+                      <div className="text-cyan-400 font-bold uppercase tracking-wider text-[10px] mb-1">Objective Function</div>
+                      <div className="flex items-center gap-2 select-none">
+                        <span className="text-purple-400 font-semibold">minimize</span>
+                        <span className="font-bold text-slate-200">WCSS</span>
+                        <span>=</span>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 font-sans">K</span>
+                          <span className="text-2xl font-light -my-2">∑</span>
+                          <span className="text-[10px] text-slate-500 font-sans">i=1</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-slate-500 font-sans">&nbsp;</span>
+                          <span className="text-2xl font-light -my-2">∑</span>
+                          <span className="text-[10px] text-slate-500 font-sans">x ∈ S_i</span>
+                        </div>
+                        <span className="text-slate-100 font-semibold">|| x - μ_i ||²</span>
+                      </div>
                     </div>
                   </div>
 
@@ -229,7 +242,7 @@ export default function AboutPage() {
           {/* TAB 2: MODEL EVALUATION METRICS */}
           {activeTab === "metrics" && (
             <div className="flex flex-col gap-6 animate-fadeIn duration-500">
-              
+
               <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
                   <GitBranch className="w-5 h-5 text-purple-400" /> Model Evaluation Metrics
@@ -251,7 +264,7 @@ export default function AboutPage() {
                 </div>
               ) : metrics && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                  
+
                   {/* Inertia */}
                   <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
                     <div className="flex justify-between items-start">
@@ -340,7 +353,7 @@ export default function AboutPage() {
           {/* TAB 3: EXPLORATORY DATA ANALYSIS (EDA) */}
           {activeTab === "eda" && (
             <div className="flex flex-col gap-10 animate-fadeIn duration-500">
-              
+
               <div className="flex flex-col gap-2">
                 <h2 className="text-lg font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-cyan-400" /> Exploratory Data Analysis (EDA)
@@ -351,7 +364,7 @@ export default function AboutPage() {
               </div>
 
               <div className="flex flex-col gap-12 mt-2">
-                
+
                 {/* 1. Spatial Locations Plot */}
                 <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-6 hover:border-cyan-500/10 transition-all duration-300">
                   <div className="flex flex-col gap-1.5">
@@ -361,9 +374,9 @@ export default function AboutPage() {
                     </h3>
                   </div>
                   <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-2 flex items-center justify-center">
-                    <img 
-                      src="/eda/earthquake_locations.png" 
-                      alt="Earthquake Locations in Indonesia" 
+                    <img
+                      src="/eda/earthquake_locations.png"
+                      alt="Earthquake Locations in Indonesia"
                       className="max-h-[420px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500"
                     />
                   </div>
@@ -384,9 +397,9 @@ export default function AboutPage() {
                     </h3>
                   </div>
                   <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-2 flex items-center justify-center">
-                    <img 
-                      src="/eda/magnitude_distribution.png" 
-                      alt="Earthquake Magnitude Distribution" 
+                    <img
+                      src="/eda/magnitude_distribution.png"
+                      alt="Earthquake Magnitude Distribution"
                       className="max-h-[350px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500"
                     />
                   </div>
@@ -407,9 +420,9 @@ export default function AboutPage() {
                     </h3>
                   </div>
                   <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-2 flex items-center justify-center">
-                    <img 
-                      src="/eda/depth_distribution.png" 
-                      alt="Earthquake Focal Depth Distribution" 
+                    <img
+                      src="/eda/depth_distribution.png"
+                      alt="Earthquake Focal Depth Distribution"
                       className="max-h-[350px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500"
                     />
                   </div>
@@ -430,9 +443,9 @@ export default function AboutPage() {
                     </h3>
                   </div>
                   <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-2 flex items-center justify-center">
-                    <img 
-                      src="/eda/events_per_year.png" 
-                      alt="Earthquake Events per Year" 
+                    <img
+                      src="/eda/events_per_year.png"
+                      alt="Earthquake Events per Year"
                       className="max-h-[350px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500"
                     />
                   </div>
@@ -453,9 +466,9 @@ export default function AboutPage() {
                     </h3>
                   </div>
                   <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-2 flex items-center justify-center">
-                    <img 
-                      src="/eda/top10_locations.png" 
-                      alt="Top 10 Locations with Most Frequent Earthquakes" 
+                    <img
+                      src="/eda/top10_locations.png"
+                      alt="Top 10 Locations with Most Frequent Earthquakes"
                       className="max-h-[350px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500"
                     />
                   </div>
