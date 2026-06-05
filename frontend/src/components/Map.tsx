@@ -208,21 +208,20 @@ export default function Map({
                 </Polygon>
               )}
 
-              {/* Draw Danger Zone Circle on Hover */}
-              {isHovered && (
-                <Circle
-                  center={cluster.centroid}
-                  radius={dangerRadius}
-                  pathOptions={{
-                    color: "#ef4444", // Tailwind red-500
-                    fillColor: "#ef4444",
-                    fillOpacity: 0.12,
-                    weight: 1.5,
-                    dashArray: "6, 6",
-                    interactive: false // pass-through mouse events
-                  }}
-                />
-              )}
+              {/* Draw Danger Zone Circle persistently with opacity based on hover */}
+              <Circle
+                center={cluster.centroid}
+                radius={dangerRadius}
+                pathOptions={{
+                  color: "#ef4444", // Tailwind red-500
+                  fillColor: "#ef4444",
+                  fillOpacity: isHovered ? 0.12 : 0,
+                  opacity: isHovered ? 0.5 : 0,
+                  weight: isHovered ? 1.5 : 0,
+                  dashArray: "6, 6",
+                  interactive: false // pass-through mouse events
+                }}
+              />
 
               {/* Draw Individual Points inside the cluster only when selected */}
               {isSelected && cluster.points.map((point, pIdx) => {
