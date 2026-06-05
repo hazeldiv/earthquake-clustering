@@ -1,6 +1,6 @@
 {
-  "buildCommand": "PYTHONPATH=. pip install -r requirements.txt",
-  "installCommand": "pip install -r requirements.txt",
+  "buildCommand": "uv pip install -r requirements.txt",
+  "installCommand": "uv pip install -r requirements.txt",
   "devCommand": "uvicorn backend.main:app --reload --port $PORT",
   "routes": [
     {
