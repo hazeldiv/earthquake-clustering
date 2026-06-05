@@ -9,9 +9,9 @@ from sklearn.cluster import KMeans
 from datetime import datetime
 
 # Configuration
-DATA_PATH = os.path.join(os.path.dirname(__file__), '..', 'dataset', 'katalog_gempa_v2_cleaned.tsv')
-GEOJSON_PATH = os.path.join(os.path.dirname(__file__), '..', 'dataset', 'IDN_adm_2_kabkota.json')
-CACHE_PATH = os.path.join(os.path.dirname(__file__), '..', 'dataset', 'processed_clusters.json')
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'katalog_gempa_v2_cleaned.tsv')
+GEOJSON_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'IDN_adm_2_kabkota.json')
+CACHE_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'processed_clusters.json')
 
 K_MIN = 72
 K_MAX = 96
