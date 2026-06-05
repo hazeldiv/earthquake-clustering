@@ -16,8 +16,10 @@ import {
   ChevronLeft,
   TrendingUp,
   AlertTriangle,
-  Info
+  Info,
+  HelpCircle
 } from "lucide-react";
+import Link from "next/link";
 import { CLUSTER_COLORS } from "./constants";
 
 // Load Map component dynamically with SSR disabled to prevent Leaflet window reference errors
@@ -201,7 +203,14 @@ export default function Dashboard() {
       </div>
 
       {/* 2. Floating Header & Trigger Panel */}
-      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-3">
+      <div className="absolute top-4 right-4 z-10 pointer-events-auto flex items-center gap-2">
+        <Link
+          href="/about"
+          className="flex items-center justify-center p-2.5 rounded-xl glass text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all duration-300"
+          title="How Clustering Works"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </Link>
         <button
           onClick={handleRecompute}
           disabled={recomputing || loading}

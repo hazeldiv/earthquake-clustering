@@ -87,3 +87,32 @@ body {
 .custom-tooltip::before {
   border-right-color: rgba(15, 23, 42, 0.9) !important;
 }
+
+/* Custom scrollbar styled for dark/neon theme */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3); /* dark slate track */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 240, 255, 0.25); /* cyan glow thumb */
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.1);
+  transition: background 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 240, 255, 0.5); /* brighter cyan thumb on hover */
+}
+
+/* Firefox scrollbar styles */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 240, 255, 0.25) rgba(15, 23, 42, 0.3);
+}
+
