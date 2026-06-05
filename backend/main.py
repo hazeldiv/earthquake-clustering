@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 import uvicorn
-from cluster_processor import get_clusters, compute_clusters, DEFAULT_PARAMS
+from cluster_processor import get_clusters, compute_clusters, get_metrics, DEFAULT_PARAMS
 
 app = FastAPI(
     title="Indonesia Earthquake Clustering API",
@@ -51,6 +51,11 @@ def health():
 def get_defaults():
     """Return the default clustering parameters."""
     return DEFAULT_PARAMS
+
+@app.get("/api/metrics")
+def get_model_metrics(recompute: bool = Query(False, description="Force recomputation of metrics")):
+    """Return model evaluation metrics (WCSS, Silhouette, Davies-Bouldin, Calinski-Harabasz, Dunn)."""
+    return get_metrics(force_recompute=recompute)
 
 @app.get("/api/clusters")
 def get_earthquake_clusters(recompute: bool = Query(False, description="Force recomputation of clusters")):

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Indonesia Earthquake Clustering Dashboard | Seismic Hazard Analysis",
-  description: "Interactive visual dashboard identifying high-frequency earthquake clusters (magnitude > 5.0) in Indonesia. Track regional impact, frequency, average magnitude, and depth over the last 10 years.",
+  description: "Interactive visual dashboard identifying high-frequency earthquake clusters in Indonesia. Track regional impact, frequency, average magnitude, and depth over the last 10 years.",
 };
 
 export default function RootLayout({

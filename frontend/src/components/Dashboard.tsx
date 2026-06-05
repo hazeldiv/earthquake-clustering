@@ -271,6 +271,9 @@ export default function Dashboard() {
           <p className="text-[11px] text-slate-400">
             Identifying high-frequency earthquake zones (Magnitude &ge; 5.0) in Indonesia.
           </p>
+          <p className="text-[10px] text-slate-500 font-medium mt-1">
+            made by Hazel Div Alden, Vensia Arisaputri, Wayne Giovanno
+          </p>
         </div>
 
         {/* Sidebar Loading / Error State */}
@@ -557,6 +560,7 @@ export default function Dashboard() {
         onConfirm={handleConfirmRecompute}
         defaultParams={defaultParams}
       />
+
 
       {/* 6. Recompute Alert / Spinner overlay */}
       {recomputing && (

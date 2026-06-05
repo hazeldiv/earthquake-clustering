@@ -6,12 +6,15 @@ import geopandas as gpd
 from shapely.geometry import Point
 from scipy.spatial import ConvexHull
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from scipy.spatial.distance import cdist
 from datetime import datetime
 
 # Configuration
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'katalog_gempa_v2_cleaned.tsv')
 GEOJSON_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'IDN_adm_2_kabkota.json')
 CACHE_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'processed_clusters.json')
+METRICS_CACHE_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'processed_metrics.json')
 
 K_MIN = 72
 K_MAX = 96
@@ -38,6 +41,43 @@ DEFAULT_PARAMS = {
 
 def log(msg):
     print(f"[PROCESSOR] {msg}")
+
+def calculate_dunn_index(X, labels):
+    """
+    Calculate the Dunn Index: ratio of min inter-cluster distance to max intra-cluster diameter.
+    Higher values indicate better clustering (compact and well-separated).
+    """
+    unique_labels = np.unique(labels)
+    n_clusters = len(unique_labels)
+    
+    if n_clusters < 2:
+        return 0.0
+
+    # 1. Calculate intra-cluster diameters (maximum pairwise distance within each cluster)
+    max_diameters = []
+    for label in unique_labels:
+        cluster_pts = X[labels == label]
+        if len(cluster_pts) > 1:
+            dists = cdist(cluster_pts, cluster_pts)
+            max_diameters.append(np.max(dists))
+        else:
+            max_diameters.append(0.0)
+    max_intra = np.max(max_diameters) if max_diameters else 1.0
+    if max_intra == 0:
+        max_intra = 1e-6
+
+    # 2. Calculate inter-cluster distances (minimum pairwise distance between clusters)
+    min_inter = np.inf
+    for i in range(n_clusters):
+        for j in range(i + 1, n_clusters):
+            pts_i = X[labels == unique_labels[i]]
+            pts_j = X[labels == unique_labels[j]]
+            dists = cdist(pts_i, pts_j)
+            min_dist = np.min(dists)
+            if min_dist < min_inter:
+                min_inter = min_dist
+
+    return float(min_inter / max_intra)
 
 def filter_scattered_points(df, neighbor_distance, min_neighbors=3):
     if len(df) < min_neighbors:
@@ -302,10 +342,55 @@ def compute_clusters(
             "points": cluster_points
         })
 
+    # Calculate evaluation metrics
+    final_features = df_filtered[['latitude', 'longitude']].values
+    final_labels = df_filtered['cluster'].values
+    inertia = float(kmeans_final.inertia_)
+    
+    if len(final_features) > 1 and len(np.unique(final_labels)) > 1:
+        try:
+            sil_score = float(silhouette_score(final_features, final_labels))
+        except Exception as e:
+            log(f"Failed to calculate silhouette score: {e}")
+            sil_score = 0.0
+            
+        try:
+            db_score = float(davies_bouldin_score(final_features, final_labels))
+        except Exception as e:
+            log(f"Failed to calculate davies bouldin score: {e}")
+            db_score = 0.0
+            
+        try:
+            ch_score = float(calinski_harabasz_score(final_features, final_labels))
+        except Exception as e:
+            log(f"Failed to calculate calinski harabasz score: {e}")
+            ch_score = 0.0
+            
+        try:
+            dunn = calculate_dunn_index(final_features, final_labels)
+        except Exception as e:
+            log(f"Failed to calculate Dunn Index: {e}")
+            dunn = 0.0
+    else:
+        sil_score, db_score, ch_score, dunn = 0.0, 0.0, 0.0, 0.0
+        
+    metrics_data = {
+        "inertia": round(inertia, 2),
+        "silhouette": round(sil_score, 4),
+        "davies_bouldin": round(db_score, 4),
+        "calinski_harabasz": round(ch_score, 2),
+        "dunn": round(dunn, 4)
+    }
+
     # Save to cache
     log(f"Saving processed clusters to {CACHE_PATH}...")
     with open(CACHE_PATH, 'w', encoding='utf-8') as f:
         json.dump(clusters_data, f, indent=2, ensure_ascii=False)
+        
+    log(f"Saving processed metrics to {METRICS_CACHE_PATH}...")
+    with open(METRICS_CACHE_PATH, 'w', encoding='utf-8') as f:
+        json.dump(metrics_data, f, indent=2, ensure_ascii=False)
+        
     log("Processing and caching complete!")
     return clusters_data
 
@@ -320,6 +405,25 @@ def get_clusters(force_recompute=False):
             log(f"Error loading cache: {e}. Recomputing...")
             
     return compute_clusters()
+
+def get_metrics(force_recompute=False):
+    """Retrieve metrics from cache or compute if missing/forced."""
+    if not force_recompute and os.path.exists(METRICS_CACHE_PATH):
+        log(f"Loading metrics from cache {METRICS_CACHE_PATH}...")
+        try:
+            with open(METRICS_CACHE_PATH, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            log(f"Error loading metrics cache: {e}. Recomputing...")
+            
+    compute_clusters()
+    if os.path.exists(METRICS_CACHE_PATH):
+        try:
+            with open(METRICS_CACHE_PATH, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            log(f"Failed to load metrics after recomputing: {e}")
+    return {}
 
 if __name__ == '__main__':
     # Test execution
