@@ -21,6 +21,19 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CLUSTER_COLORS } from "./constants";
+import RecomputeModal from "./RecomputeModal";
+
+interface ClusterParams {
+  k_min: number;
+  k_max: number;
+  random_state: number;
+  mag_threshold: number;
+  depth_threshold: number;
+  neighbor_distance: number;
+  min_events: number;
+  year_span: number;
+  smooth_factor: number;
+}
 
 // Load Map component dynamically with SSR disabled to prevent Leaflet window reference errors
 const Map = dynamic(() => import("./Map"), { 
@@ -84,7 +97,23 @@ export default function Dashboard() {
   const [minEvents, setMinEvents] = useState<number>(5);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [defaultParams, setDefaultParams] = useState<ClusterParams>({
+    k_min: 72, k_max: 96, random_state: 42,
+    mag_threshold: 5.0, depth_threshold: 50.0,
+    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50
+  });
+
   const API_BASE = "http://localhost:8000";
+
+  // Fetch default params from backend on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/defaults`)
+      .then(r => r.json())
+      .then(data => setDefaultParams(data))
+      .catch(() => {}); // silently fall back to hard-coded defaults
+  }, []);
 
   // Fetch cluster data
   const fetchClusters = async (forceRecompute = false) => {
@@ -110,17 +139,24 @@ export default function Dashboard() {
     fetchClusters();
   }, []);
 
-  // Handle recompute click
-  const handleRecompute = async () => {
+  // Handle recompute click — open modal instead of running immediately
+  const handleRecompute = () => setShowModal(true);
+
+  // Called when user confirms params in the modal
+  const handleConfirmRecompute = async (params: ClusterParams) => {
+    setShowModal(false);
     setRecomputing(true);
     try {
-      const res = await fetch(`${API_BASE}/api/clusters/recompute`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/api/clusters/recompute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+      });
       if (res.ok) {
-        // Poll health or wait and fetch
         setTimeout(() => {
           fetchClusters(false);
           setRecomputing(false);
-        }, 12000); // clustering takes ~10s
+        }, 12000);
       } else {
         throw new Error("Trigger recompute failed");
       }
@@ -555,7 +591,15 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* 5. Recompute Alert / Spinner overlay */}
+      {/* 5. Recompute Parameters Modal */}
+      <RecomputeModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleConfirmRecompute}
+        defaultParams={defaultParams}
+      />
+
+      {/* 6. Recompute Alert / Spinner overlay */}
       {recomputing && (
         <div className="absolute inset-0 bg-[#090d16]/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center gap-4 pointer-events-auto">
           <RefreshCw className="w-12 h-12 text-cyan-400 animate-spin" />

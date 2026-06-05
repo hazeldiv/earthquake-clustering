@@ -23,6 +23,19 @@ MIN_EVENTS = 5
 YEAR_SPAN = 10
 SMOOTH_FACTOR = 50
 
+# Default parameters as a dict for easy serialization
+DEFAULT_PARAMS = {
+    "k_min": K_MIN,
+    "k_max": K_MAX,
+    "random_state": RANDOM_STATE,
+    "mag_threshold": MAG_THRESHOLD,
+    "depth_threshold": DEPTH_THRESHOLD,
+    "neighbor_distance": NEIGHBOR_DISTANCE,
+    "min_events": MIN_EVENTS,
+    "year_span": YEAR_SPAN,
+    "smooth_factor": SMOOTH_FACTOR,
+}
+
 def log(msg):
     print(f"[PROCESSOR] {msg}")
 
@@ -113,7 +126,17 @@ def filter_clusters_by_temporal_density(df, min_events=5, year_span=10):
     log(f"Clusters meeting temporal density: {len(valid_clusters)}/{df['cluster'].nunique()}")
     return df[df['cluster'].isin(valid_clusters)]
 
-def compute_clusters():
+def compute_clusters(
+    k_min: int = K_MIN,
+    k_max: int = K_MAX,
+    random_state: int = RANDOM_STATE,
+    mag_threshold: float = MAG_THRESHOLD,
+    depth_threshold: float = DEPTH_THRESHOLD,
+    neighbor_distance: float = NEIGHBOR_DISTANCE,
+    min_events: int = MIN_EVENTS,
+    year_span: int = YEAR_SPAN,
+    smooth_factor: int = SMOOTH_FACTOR,
+):
     """Run clustering, perform spatial joins to match kabupaten/kota, and save/cache results."""
     log(f"Loading data from {DATA_PATH}...")
     df = pd.read_csv(DATA_PATH, sep='\t')
@@ -125,12 +148,12 @@ def compute_clusters():
     
     # Filter by thresholds
     log("Filtering by magnitude and depth...")
-    df_thresh = df[(df['magnitude'] >= MAG_THRESHOLD) & (df['depth'] <= DEPTH_THRESHOLD)].copy().reset_index(drop=True)
+    df_thresh = df[(df['magnitude'] >= mag_threshold) & (df['depth'] <= depth_threshold)].copy().reset_index(drop=True)
     log(f"Rows after threshold: {len(df_thresh)}")
     
     # Filter scattered
     log("Filtering scattered points...")
-    df_filtered = filter_scattered_points(df_thresh, NEIGHBOR_DISTANCE, min_neighbors=3)
+    df_filtered = filter_scattered_points(df_thresh, neighbor_distance, min_neighbors=3)
     log(f"Rows after scatter filter: {len(df_filtered)}")
     
     if len(df_filtered) == 0:
@@ -140,22 +163,22 @@ def compute_clusters():
     geo_features = df_filtered[['latitude', 'longitude']].values
 
     # K-Means Elbow detection
-    log(f"Running Elbow Method (K from {K_MIN} to {K_MAX})...")
+    log(f"Running Elbow Method (K from {k_min} to {k_max})...")
     inertias = []
-    for k in range(K_MIN, K_MAX + 1):
-        kmeans = KMeans(n_clusters=k, random_state=RANDOM_STATE, n_init=10)
+    for k in range(k_min, k_max + 1):
+        kmeans = KMeans(n_clusters=k, random_state=random_state, n_init=10)
         kmeans.fit(geo_features)
         inertias.append(kmeans.inertia_)
         
     optimal_k = detect_elbow(inertias)
     
     log(f"Running final K-Means with K={optimal_k}...")
-    kmeans_final = KMeans(n_clusters=optimal_k, random_state=RANDOM_STATE, n_init=10)
+    kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
     df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
     
     # Filter by temporal density
     log("Filtering clusters by temporal density...")
-    df_filtered = filter_clusters_by_temporal_density(df_filtered, MIN_EVENTS, YEAR_SPAN)
+    df_filtered = filter_clusters_by_temporal_density(df_filtered, min_events, year_span)
     
     # Renumber clusters
     cluster_mapping = {old_id: new_id for new_id, old_id in enumerate(df_filtered['cluster'].unique())}
@@ -236,7 +259,7 @@ def compute_clusters():
                 hull = ConvexHull(points_xy)
                 hull_points = points_xy[hull.vertices]
                 hull_vertices = np.vstack([hull_points, hull_points[0]]) # Close polygon
-                smooth_vertices = smooth_polygon_bspline(hull_vertices, num_points=SMOOTH_FACTOR)
+                smooth_vertices = smooth_polygon_bspline(hull_vertices, num_points=smooth_factor)
                 # Convert back to [latitude, longitude] list of lists for Leaflet
                 hull_coords = [[float(y), float(x)] for x, y in smooth_vertices]
             except Exception as e:
