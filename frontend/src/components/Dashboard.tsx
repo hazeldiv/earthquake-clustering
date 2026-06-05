@@ -92,8 +92,6 @@ export default function Dashboard() {
   }, [selectedClusterId]);
   
   // Filter states
-  const [minMagnitude, setMinMagnitude] = useState<number>(5.0);
-  const [maxDepth, setMaxDepth] = useState<number>(50.0);
   const [minEvents, setMinEvents] = useState<number>(5);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -170,10 +168,6 @@ export default function Dashboard() {
   // Filtered clusters calculation
   const filteredClusters = useMemo(() => {
     return clusters.filter(c => {
-      // Filter by average magnitude (or check if any point exceeds magnitude threshold)
-      const matchesMag = c.avg_magnitude >= minMagnitude;
-      // Filter by average depth
-      const matchesDepth = c.avg_depth <= maxDepth;
       // Filter by cluster size
       const matchesEvents = c.event_count >= minEvents;
       // Filter by search query (province or regency name)
@@ -181,9 +175,9 @@ export default function Dashboard() {
         c.kabupaten_kota.some(k => k.toLowerCase().includes(searchQuery.toLowerCase())) ||
         c.provinces.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      return matchesMag && matchesDepth && matchesEvents && matchesSearch;
+      return matchesEvents && matchesSearch;
     });
-  }, [clusters, minMagnitude, maxDepth, minEvents, searchQuery]);
+  }, [clusters, minEvents, searchQuery]);
 
   // Selected cluster object
   const selectedCluster = useMemo(() => {
@@ -346,42 +340,7 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Sliders Grid */}
-              <div className="flex flex-col gap-2 text-[11px]">
-                {/* Min Magnitude */}
-                <div className="flex flex-col gap-1">
-                  <div className="flex justify-between text-slate-400 font-medium">
-                    <span>Min Avg Magnitude</span>
-                    <span className="text-cyan-400 font-bold">M {minMagnitude.toFixed(1)}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="5.0"
-                    max="6.0"
-                    step="0.1"
-                    value={minMagnitude}
-                    onChange={(e) => setMinMagnitude(parseFloat(e.target.value))}
-                    className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-cyan-400"
-                  />
-                </div>
 
-                {/* Max Depth */}
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className="flex justify-between text-slate-400 font-medium">
-                    <span>Max Avg Depth</span>
-                    <span className="text-purple-400 font-bold">{maxDepth} km</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="10"
-                    max="50"
-                    step="5"
-                    value={maxDepth}
-                    onChange={(e) => setMaxDepth(parseInt(e.target.value))}
-                    className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-purple-400"
-                  />
-                </div>
-              </div>
             </div>
 
             {/* Clusters List */}

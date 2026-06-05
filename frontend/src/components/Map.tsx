@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Fragment } from "react";
 import { MapContainer, TileLayer, Polygon, Circle, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import { CLUSTER_COLORS } from "./constants";
@@ -139,7 +139,7 @@ export default function Map({
             : 100000; // default 80km
 
           return (
-            <div key={cluster.cluster_id}>
+            <Fragment key={cluster.cluster_id}>
               {/* Draw Hull Polygon */}
               {hasPolygon && (
                 <Polygon
@@ -159,7 +159,9 @@ export default function Map({
                   }}
                 >
                   <Tooltip
-                    sticky
+                    direction="top"
+                    offset={[0, -4]}
+                    interactive={false}
                     className="custom-tooltip"
                   >
                     <div className="flex flex-col gap-1">
@@ -246,7 +248,7 @@ export default function Map({
                       mouseout: () => onHoverCluster(null)
                     }}
                   >
-                    <Tooltip className="custom-tooltip">
+                    <Tooltip interactive={false} className="custom-tooltip">
                       <div className="text-[11px] leading-tight">
                         <div className="font-semibold text-slate-200 mb-0.5">{point.kabupaten_kota}</div>
                         <div>Magnitude: <span className="text-amber-400 font-semibold">M {point.magnitude}</span></div>
@@ -257,8 +259,9 @@ export default function Map({
                   </CircleMarker>
                 );
               })}
-            </div>
+            </Fragment>
           );
+
         })}
       </MapContainer>
     </div>
