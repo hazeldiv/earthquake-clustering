@@ -3,22 +3,8 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Polygon, CircleMarker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
+import { CLUSTER_COLORS } from "./constants";
 
-// Glow color palette for clusters
-export const CLUSTER_COLORS = [
-  "#00f0ff", // Neon Cyan
-  "#ff007f", // Neon Magenta
-  "#ff7f00", // Neon Orange
-  "#bd00ff", // Neon Purple
-  "#00ff66", // Neon Lime
-  "#ffea00", // Neon Yellow
-  "#00bfff", // Neon Sky Blue
-  "#ff3333", // Neon Red
-  "#ff66cc", // Neon Pink
-  "#50fa7b", // Neon Emerald
-  "#ff5555", // Neon Tangerine
-  "#caa9fa"  // Neon Lavender
-];
 
 interface EarthquakePoint {
   latitude: number;
@@ -164,9 +150,16 @@ export default function Map({
                         {cluster.title.split('(')[0].trim()}
                       </div>
                       
-                      <div className="text-xs text-slate-300 max-w-[250px] leading-tight">
-                        <span className="font-semibold text-slate-400">Impact Area:</span> {cluster.kabupaten_kota.slice(0, 3).join(', ')}
-                        {cluster.kabupaten_kota.length > 3 ? ` (+${cluster.kabupaten_kota.length - 3} more)` : ''}
+                      <div className="text-xs text-slate-300 max-w-[250px] leading-tight flex items-center gap-1">
+                        <span className="font-semibold text-slate-400 shrink-0">Impact Area:</span>
+                        <span className="truncate" title={cluster.kabupaten_kota.join(', ')}>
+                          {cluster.kabupaten_kota.slice(0, 3).join(', ')}
+                        </span>
+                        {cluster.kabupaten_kota.length > 3 && (
+                          <span className="shrink-0 text-[10px] text-slate-400">
+                            (+{cluster.kabupaten_kota.length - 3})
+                          </span>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 pt-1 border-t border-slate-700/50 text-[11px]">
@@ -192,16 +185,11 @@ export default function Map({
                 </Polygon>
               )}
 
-              {/* Draw Individual Points inside the cluster */}
-              {cluster.points.map((point, pIdx) => {
-                const isPointSelectedOrHovered = isSelected || isHovered;
-                // If a selection exists, only draw points for the selected/hovered cluster
-                // Or if no selection exists, draw all points at low opacity
-                if (hasSelection && !isPointSelectedOrHovered) return null;
-                
-                const pRadius = isPointSelectedOrHovered ? 4.5 : 2;
-                const pOpacity = isPointSelectedOrHovered ? 0.8 : 0.25;
-                const pFillOpacity = isPointSelectedOrHovered ? 0.8 : 0.25;
+              {/* Draw Individual Points inside the cluster only when selected */}
+              {isSelected && cluster.points.map((point, pIdx) => {
+                const pRadius = 4.5;
+                const pOpacity = 0.8;
+                const pFillOpacity = 0.8;
 
                 return (
                   <CircleMarker
@@ -210,7 +198,7 @@ export default function Map({
                     radius={pRadius}
                     pathOptions={{
                       color: color,
-                      weight: isPointSelectedOrHovered ? 1.5 : 0.5,
+                      weight: 1.5,
                       fillColor: color,
                       fillOpacity: pFillOpacity,
                       opacity: pOpacity

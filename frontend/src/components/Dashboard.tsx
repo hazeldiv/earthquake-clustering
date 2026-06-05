@@ -13,11 +13,12 @@ import {
   RefreshCw,
   X,
   ChevronRight,
+  ChevronLeft,
   TrendingUp,
   AlertTriangle,
   Info
 } from "lucide-react";
-import { CLUSTER_COLORS } from "./Map";
+import { CLUSTER_COLORS } from "./constants";
 
 // Load Map component dynamically with SSR disabled to prevent Leaflet window reference errors
 const Map = dynamic(() => import("./Map"), { 
@@ -63,6 +64,17 @@ export default function Dashboard() {
   // Selection & hover state
   const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
   const [hoveredClusterId, setHoveredClusterId] = useState<number | null>(null);
+
+  // Panel collapse/expand states
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+
+  // Automatically reopen right details panel when a cluster is selected
+  useEffect(() => {
+    if (selectedClusterId !== null) {
+      setRightPanelOpen(true);
+    }
+  }, [selectedClusterId]);
   
   // Filter states
   const [minMagnitude, setMinMagnitude] = useState<number>(5.0);
@@ -202,7 +214,9 @@ export default function Dashboard() {
       </div>
 
       {/* 3. Floating Left Sidebar - Control Panel */}
-      <div className="absolute top-4 left-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden">
+      <div className={`absolute top-4 left-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${
+        leftPanelOpen ? "translate-x-0 opacity-100" : "-translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
+      }`}>
         
         {/* Sidebar Header */}
         <div className="p-5 border-b border-white/5 flex flex-col gap-1.5 bg-slate-950/20">
@@ -392,14 +406,27 @@ export default function Dashboard() {
                 })
               )}
             </div>
-
           </div>
         )}
       </div>
 
+      {/* Left Sidebar Toggle Button */}
+      <button
+        onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-r-xl glass border-l-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${
+          leftPanelOpen ? "left-[400px]" : "left-4 rounded-l-xl border-l"
+        }`}
+        title={leftPanelOpen ? "Collapse Filter Panel" : "Expand Filter Panel"}
+      >
+        {leftPanelOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+
       {/* 4. Selected Cluster Details Card (Floating on bottom-right or top-right depending on size) */}
       {selectedCluster && (
-        <div className="absolute top-4 right-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden animate-in slide-in-from-right duration-300">
+        <>
+          <div className={`absolute top-4 right-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${
+            rightPanelOpen ? "translate-x-0 opacity-100" : "translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
+          }`}>
           
           {/* Details Header */}
           <div className="p-4 border-b border-white/5 bg-slate-950/20 flex items-center justify-between">
@@ -504,7 +531,19 @@ export default function Dashboard() {
             </button>
           </div>
 
-        </div>
+          </div>
+
+          {/* Right Sidebar Toggle Button */}
+          <button
+            onClick={() => setRightPanelOpen(!rightPanelOpen)}
+            className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-l-xl glass border-r-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${
+              rightPanelOpen ? "right-[400px]" : "right-4 rounded-r-xl border-r"
+            }`}
+            title={rightPanelOpen ? "Collapse Details Panel" : "Expand Details Panel"}
+          >
+            {rightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+        </>
       )}
 
       {/* 5. Recompute Alert / Spinner overlay */}
