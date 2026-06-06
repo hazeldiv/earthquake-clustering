@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from scipy.spatial.distance import cdist
 from datetime import datetime
+from typing import Optional, Callable
 
 # Configuration
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'dataset', 'katalog_gempa_v2_cleaned.tsv')
@@ -147,8 +148,10 @@ def compute_clusters(
     smooth_factor: int = SMOOTH_FACTOR,
     bypass_elbow: bool = BYPASS_ELBOW,
     fixed_k: int = FIXED_K,
+    progress_callback: Optional[Callable[[int, str], None]] = None,
 ):
     """Run clustering, perform spatial joins to match kabupaten/kota, and save/cache results."""
+    if progress_callback: progress_callback(5, "Loading raw earthquake catalog database...")
     log(f"Loading data from {DATA_PATH}...")
     df = pd.read_csv(DATA_PATH, sep='\t')
     
@@ -158,11 +161,13 @@ def compute_clusters(
     log(f"Latest earthquake in dataset: {max_date}")
     
     # Filter by thresholds
+    if progress_callback: progress_callback(15, "Filtering catalog by magnitude & depth thresholds...")
     log("Filtering by magnitude and depth...")
     df_thresh = df[(df['magnitude'] >= mag_threshold) & (df['depth'] <= depth_threshold)].copy().reset_index(drop=True)
     log(f"Rows after threshold: {len(df_thresh)}")
     
     # Filter scattered
+    if progress_callback: progress_callback(25, "Cleaning spatial outliers & isolated points...")
     log("Filtering scattered points...")
     df_filtered = filter_scattered_points(df_thresh, neighbor_distance, min_neighbors=3)
     log(f"Rows after scatter filter: {len(df_filtered)}")
@@ -175,11 +180,13 @@ def compute_clusters(
 
     # K-Means Elbow detection / selection
     if bypass_elbow:
+        if progress_callback: progress_callback(40, f"Bypassing Elbow Method. Initializing K-Means with fixed K={fixed_k}...")
         optimal_k = fixed_k
         log(f"Elbow method bypassed. Using fixed K={optimal_k}")
         kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
         df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
     else:
+        if progress_callback: progress_callback(35, f"Running K-Means Elbow Method (testing K from {k_min} to {k_max})...")
         log(f"Running Elbow Method (K from {k_min} to {k_max})...")
         inertias = []
         for k in range(k_min, k_max + 1):
@@ -194,6 +201,7 @@ def compute_clusters(
         df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
     
     # Filter by temporal density
+    if progress_callback: progress_callback(60, "Filtering generated clusters by temporal density...")
     log("Filtering clusters by temporal density...")
     df_filtered = filter_clusters_by_temporal_density(df_filtered, min_events, year_span)
     
@@ -204,6 +212,7 @@ def compute_clusters(
     log(f"Final cluster count: {final_k}")
 
     # Load administrative boundary GeoJSON
+    if progress_callback: progress_callback(70, "Performing administrative spatial joins with Indonesian regencies...")
     log(f"Loading administrative boundary GeoJSON from {GEOJSON_PATH}...")
     gdf_kab = gpd.read_file(GEOJSON_PATH)
     
@@ -234,6 +243,7 @@ def compute_clusters(
         gdf_joined.loc[idx, 'TYPE_2'] = nearest_zone['TYPE_2']
 
     # Now calculate cluster statistics
+    if progress_callback: progress_callback(85, "Constructing boundary convex hulls & B-Spline smoothing...")
     clusters_data = []
     
     # Ten years filter span
@@ -320,6 +330,7 @@ def compute_clusters(
         })
 
     # Calculate evaluation metrics
+    if progress_callback: progress_callback(95, "Calculating model scoring metrics (Silhouette, Davies-Bouldin)...")
     final_features = df_filtered[['latitude', 'longitude']].values
     final_labels = df_filtered['cluster'].values
     inertia = float(kmeans_final.inertia_)
@@ -353,6 +364,7 @@ def compute_clusters(
     }
 
     # Save to cache
+    if progress_callback: progress_callback(100, "Saving results to cache and finalizing...")
     log(f"Saving processed clusters to {CACHE_PATH}...")
     with open(CACHE_PATH, 'w', encoding='utf-8') as f:
         json.dump(clusters_data, f, indent=2, ensure_ascii=False)

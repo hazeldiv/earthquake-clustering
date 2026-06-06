@@ -34,7 +34,7 @@ export default function AboutPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/metrics`)
+    fetch(`${API_BASE}/api/metrics?t=${Date.now()}`, { cache: "no-store" })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load model metrics");
         return res.json();

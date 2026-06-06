@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Query
+from fastapi import FastAPI, BackgroundTasks, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -50,17 +50,26 @@ def health():
     return {"status": "ok"}
 
 @app.get("/api/defaults")
-def get_defaults():
+def get_defaults(response: Response):
     """Return the default clustering parameters."""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return DEFAULT_PARAMS
 
 @app.get("/api/metrics")
-def get_model_metrics(recompute: bool = Query(False, description="Force recomputation of metrics")):
+def get_model_metrics(response: Response, recompute: bool = Query(False, description="Force recomputation of metrics")):
     """Return model evaluation metrics (WCSS, Silhouette, Davies-Bouldin, Calinski-Harabasz, Dunn)."""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return get_metrics(force_recompute=recompute)
 
 @app.get("/api/clusters")
-def get_earthquake_clusters(recompute: bool = Query(False, description="Force recomputation of clusters")):
+def get_earthquake_clusters(response: Response, recompute: bool = Query(False, description="Force recomputation of clusters")):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     global _cache
     if recompute:
         print("[API] Force recompute requested...")
@@ -69,26 +78,63 @@ def get_earthquake_clusters(recompute: bool = Query(False, description="Force re
         _cache = get_clusters(force_recompute=False)
     return _cache
 
+_recompute_status = {
+    "status": "ready",
+    "progress": 100,
+    "message": "Ready"
+}
+
+def update_status_callback(progress: int, message: str):
+    global _recompute_status
+    _recompute_status["progress"] = progress
+    _recompute_status["message"] = message
+
+@app.get("/api/clusters/status")
+def get_recompute_status(response: Response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    global _recompute_status
+    return _recompute_status
+
 @app.post("/api/clusters/recompute")
 def trigger_recompute(params: ClusterParams, background_tasks: BackgroundTasks):
     """Trigger recomputation of clusters in the background and update the cache."""
+    global _recompute_status
+    if _recompute_status["status"] == "processing":
+        return {"status": "processing", "message": "Recomputation is already in progress."}
+        
+    _recompute_status["status"] = "processing"
+    _recompute_status["progress"] = 0
+    _recompute_status["message"] = "Initializing..."
+    
     def recompute_task():
-        global _cache
-        print("[API] Background recomputation started...")
-        _cache = compute_clusters(
-            k_min=params.k_min,
-            k_max=params.k_max,
-            random_state=params.random_state,
-            mag_threshold=params.mag_threshold,
-            depth_threshold=params.depth_threshold,
-            neighbor_distance=params.neighbor_distance,
-            min_events=params.min_events,
-            year_span=params.year_span,
-            smooth_factor=params.smooth_factor,
-            bypass_elbow=params.bypass_elbow,
-            fixed_k=params.fixed_k,
-        )
-        print("[API] Background recomputation finished.")
+        global _cache, _recompute_status
+        try:
+            print("[API] Background recomputation started...")
+            _cache = compute_clusters(
+                k_min=params.k_min,
+                k_max=params.k_max,
+                random_state=params.random_state,
+                mag_threshold=params.mag_threshold,
+                depth_threshold=params.depth_threshold,
+                neighbor_distance=params.neighbor_distance,
+                min_events=params.min_events,
+                year_span=params.year_span,
+                smooth_factor=params.smooth_factor,
+                bypass_elbow=params.bypass_elbow,
+                fixed_k=params.fixed_k,
+                progress_callback=update_status_callback,
+            )
+            print("[API] Background recomputation finished.")
+            _recompute_status["status"] = "ready"
+            _recompute_status["progress"] = 100
+            _recompute_status["message"] = "Ready"
+        except Exception as e:
+            print(f"[API] Error during background recomputation: {e}")
+            _recompute_status["status"] = "failed"
+            _recompute_status["message"] = f"Failed: {str(e)}"
+            _recompute_status["progress"] = 0
         
     background_tasks.add_task(recompute_task)
     return {"status": "processing", "message": "Recomputation started in the background."}

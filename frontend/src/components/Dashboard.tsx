@@ -76,6 +76,8 @@ export default function Dashboard() {
   const [clusters, setClusters] = useState<ClusterData[]>([]);
   const [loading, setLoading] = useState(true);
   const [recomputing, setRecomputing] = useState(false);
+  const [recomputeProgress, setRecomputeProgress] = useState(0);
+  const [recomputeMessage, setRecomputeMessage] = useState("Initializing...");
   const [error, setError] = useState<string | null>(null);
 
   // Selection & hover state
@@ -116,7 +118,7 @@ export default function Dashboard() {
 
   // Fetch default params from backend on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/defaults`)
+    fetch(`${API_BASE}/api/defaults?t=${Date.now()}`, { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
         setDefaultParams(prev => {
@@ -133,8 +135,8 @@ export default function Dashboard() {
     try {
       setLoading(true);
       setError(null);
-      const url = `${API_BASE}/api/clusters${forceRecompute ? "?recompute=true" : ""}`;
-      const res = await fetch(url);
+      const url = `${API_BASE}/api/clusters?t=${Date.now()}${forceRecompute ? "&recompute=true" : ""}`;
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         throw new Error(`Failed to load data: status ${res.status}`);
       }
@@ -159,6 +161,8 @@ export default function Dashboard() {
   const handleConfirmRecompute = async (params: ClusterParams) => {
     setShowModal(false);
     setRecomputing(true);
+    setRecomputeProgress(0);
+    setRecomputeMessage("Initializing...");
     setCurrentParams(params); // Save customized parameters as the currently active ones
     try {
       const res = await fetch(`${API_BASE}/api/clusters/recompute`, {
@@ -167,10 +171,37 @@ export default function Dashboard() {
         body: JSON.stringify(params),
       });
       if (res.ok) {
+        // Poll status endpoint until it returns 'ready'
+        const checkStatus = async () => {
+          try {
+            const statusRes = await fetch(`${API_BASE}/api/clusters/status?t=${Date.now()}`, { cache: "no-store" });
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              if (statusData.status === "ready") {
+                clearInterval(pollInterval);
+                setRecomputeProgress(100);
+                setRecomputeMessage("Ready");
+                await fetchClusters(false);
+                setRecomputing(false);
+              } else {
+                setRecomputeProgress(statusData.progress || 0);
+                setRecomputeMessage(statusData.message || "Processing...");
+              }
+            }
+          } catch (pollErr) {
+            console.error("Error polling status:", pollErr);
+          }
+        };
+
+        // Poll every 1.5 seconds
+        const pollInterval = setInterval(checkStatus, 1500);
+
+        // Add a safety fallback timeout of 45 seconds to prevent infinite loaders
         setTimeout(() => {
+          clearInterval(pollInterval);
           fetchClusters(false);
           setRecomputing(false);
-        }, 20000);
+        }, 45000);
       } else {
         throw new Error("Trigger recompute failed");
       }
@@ -576,14 +607,24 @@ export default function Dashboard() {
 
       {/* 6. Recompute Alert / Spinner overlay */}
       {recomputing && (
-        <div className="absolute inset-0 bg-[#090d16]/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center gap-4 pointer-events-auto">
-          <RefreshCw className="w-12 h-12 text-cyan-400 animate-spin" />
-          <div className="flex flex-col gap-1">
-            <h3 className="text-lg font-bold text-slate-100 uppercase tracking-widest">
-              Reclustering Earthquakes
+        <div className="absolute inset-0 bg-[#090d16]/90 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center gap-6 pointer-events-auto animate-fadeIn duration-300">
+          <div className="flex flex-col gap-3 max-w-sm w-full px-6">
+            <h3 className="text-md font-bold text-slate-100 uppercase tracking-widest">
+              Reclustering Earthquakes ({recomputeProgress}%)
             </h3>
-            <p className="text-xs text-slate-400 max-w-sm">
-              The K-Means clustering algorithm, B-Spline interpolation, and spatial joins with 394 Indonesian boundary polygons are running. This takes approximately 18-20 seconds.
+            
+            {/* Progress Track */}
+            <div className="w-full h-1.5 rounded-full bg-slate-900 border border-white/5 overflow-hidden relative">
+              {/* Dynamic Progress Bar */}
+              <div 
+                className="h-full bg-cyan-500 transition-all duration-500 rounded-full shadow-[0_0_8px_#06b6d4]"
+                style={{ width: `${recomputeProgress}%` }}
+              />
+            </div>
+            
+            {/* Dynamic Step Message */}
+            <p className="text-[11px] text-slate-400 font-medium tracking-wide animate-pulse">
+              {recomputeProgress === 100 ? "Finalizing clusters..." : recomputeMessage}
             </p>
           </div>
         </div>
