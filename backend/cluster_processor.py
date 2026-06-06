@@ -25,6 +25,8 @@ NEIGHBOR_DISTANCE = 0.3
 MIN_EVENTS = 5
 YEAR_SPAN = 10
 SMOOTH_FACTOR = 50
+BYPASS_ELBOW = False
+FIXED_K = 75
 
 # Default parameters as a dict for easy serialization
 DEFAULT_PARAMS = {
@@ -37,47 +39,14 @@ DEFAULT_PARAMS = {
     "min_events": MIN_EVENTS,
     "year_span": YEAR_SPAN,
     "smooth_factor": SMOOTH_FACTOR,
+    "bypass_elbow": BYPASS_ELBOW,
+    "fixed_k": FIXED_K,
 }
 
 def log(msg):
     print(f"[PROCESSOR] {msg}")
 
-def calculate_dunn_index(X, labels):
-    """
-    Calculate the Dunn Index: ratio of min inter-cluster distance to max intra-cluster diameter.
-    Higher values indicate better clustering (compact and well-separated).
-    """
-    unique_labels = np.unique(labels)
-    n_clusters = len(unique_labels)
-    
-    if n_clusters < 2:
-        return 0.0
 
-    # 1. Calculate intra-cluster diameters (maximum pairwise distance within each cluster)
-    max_diameters = []
-    for label in unique_labels:
-        cluster_pts = X[labels == label]
-        if len(cluster_pts) > 1:
-            dists = cdist(cluster_pts, cluster_pts)
-            max_diameters.append(np.max(dists))
-        else:
-            max_diameters.append(0.0)
-    max_intra = np.max(max_diameters) if max_diameters else 1.0
-    if max_intra == 0:
-        max_intra = 1e-6
-
-    # 2. Calculate inter-cluster distances (minimum pairwise distance between clusters)
-    min_inter = np.inf
-    for i in range(n_clusters):
-        for j in range(i + 1, n_clusters):
-            pts_i = X[labels == unique_labels[i]]
-            pts_j = X[labels == unique_labels[j]]
-            dists = cdist(pts_i, pts_j)
-            min_dist = np.min(dists)
-            if min_dist < min_inter:
-                min_inter = min_dist
-
-    return float(min_inter / max_intra)
 
 def filter_scattered_points(df, neighbor_distance, min_neighbors=3):
     if len(df) < min_neighbors:
@@ -176,6 +145,8 @@ def compute_clusters(
     min_events: int = MIN_EVENTS,
     year_span: int = YEAR_SPAN,
     smooth_factor: int = SMOOTH_FACTOR,
+    bypass_elbow: bool = BYPASS_ELBOW,
+    fixed_k: int = FIXED_K,
 ):
     """Run clustering, perform spatial joins to match kabupaten/kota, and save/cache results."""
     log(f"Loading data from {DATA_PATH}...")
@@ -202,19 +173,25 @@ def compute_clusters(
 
     geo_features = df_filtered[['latitude', 'longitude']].values
 
-    # K-Means Elbow detection
-    log(f"Running Elbow Method (K from {k_min} to {k_max})...")
-    inertias = []
-    for k in range(k_min, k_max + 1):
-        kmeans = KMeans(n_clusters=k, random_state=random_state, n_init=10)
-        kmeans.fit(geo_features)
-        inertias.append(kmeans.inertia_)
+    # K-Means Elbow detection / selection
+    if bypass_elbow:
+        optimal_k = fixed_k
+        log(f"Elbow method bypassed. Using fixed K={optimal_k}")
+        kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
+        df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
+    else:
+        log(f"Running Elbow Method (K from {k_min} to {k_max})...")
+        inertias = []
+        for k in range(k_min, k_max + 1):
+            kmeans = KMeans(n_clusters=k, random_state=random_state, n_init=10)
+            kmeans.fit(geo_features)
+            inertias.append(kmeans.inertia_)
+            
+        optimal_k = detect_elbow(inertias, k_min, k_max)
         
-    optimal_k = detect_elbow(inertias, k_min, k_max)
-    
-    log(f"Running final K-Means with K={optimal_k}...")
-    kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
-    df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
+        log(f"Running final K-Means with K={optimal_k}...")
+        kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
+        df_filtered['cluster'] = kmeans_final.fit_predict(geo_features)
     
     # Filter by temporal density
     log("Filtering clusters by temporal density...")
@@ -365,21 +342,14 @@ def compute_clusters(
         except Exception as e:
             log(f"Failed to calculate calinski harabasz score: {e}")
             ch_score = 0.0
-            
-        try:
-            dunn = calculate_dunn_index(final_features, final_labels)
-        except Exception as e:
-            log(f"Failed to calculate Dunn Index: {e}")
-            dunn = 0.0
     else:
-        sil_score, db_score, ch_score, dunn = 0.0, 0.0, 0.0, 0.0
+        sil_score, db_score, ch_score = 0.0, 0.0, 0.0
         
     metrics_data = {
         "inertia": round(inertia, 2),
         "silhouette": round(sil_score, 4),
         "davies_bouldin": round(db_score, 4),
-        "calinski_harabasz": round(ch_score, 2),
-        "dunn": round(dunn, 4)
+        "calinski_harabasz": round(ch_score, 2)
     }
 
     # Save to cache

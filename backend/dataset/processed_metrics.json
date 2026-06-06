@@ -1,7 +1,6 @@
 {
-  "inertia": 139.62,
-  "silhouette": 0.5878,
-  "davies_bouldin": 0.5105,
-  "calinski_harabasz": 27062.46,
-  "dunn": 0.0322
+  "inertia": 47309.21,
+  "silhouette": 0.6984,
+  "davies_bouldin": 0.4216,
+  "calinski_harabasz": 4001.87
 }

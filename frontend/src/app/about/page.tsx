@@ -22,13 +22,11 @@ import {
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState<"how-it-works" | "metrics" | "eda">("how-it-works");
 
-  // Metrics state
   const [metrics, setMetrics] = useState<{
     inertia: number;
     silhouette: number;
     davies_bouldin: number;
     calinski_harabasz: number;
-    dunn: number;
   } | null>(null);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [metricsError, setMetricsError] = useState<string | null>(null);
@@ -355,21 +353,6 @@ export default function AboutPage() {
                       </p>
                     </div>
 
-                    {/* Dunn Index */}
-                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3 md:col-span-2">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-sm font-bold text-slate-300">Dunn Index</h3>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-sky-950/40 border border-sky-500/20 text-sky-400">
-                          Higher is better
-                        </span>
-                      </div>
-                      <div className="text-2xl font-black text-sky-400 my-1 font-mono">
-                        {metrics.dunn}
-                      </div>
-                      <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Measures the ratio of the minimum distance between points in different clusters to the maximum diameter of any cluster, where higher values indicate compact clusters that are far apart from each other.
-                      </p>
-                    </div>
 
                   </div>
                 </div>

@@ -27,6 +27,8 @@ SAMPLE_RATE = 1  # Every 2nd row
 K_MIN = 72
 K_MAX = 96
 RANDOM_STATE = 42
+BYPASS_ELBOW = False
+FIXED_K = 75
 
 # Map extent (Indonesia bounding box)
 LON_MIN, LON_MAX = 94, 142
@@ -289,22 +291,26 @@ def main():
     # -------------------------------------------------------------------------
     # 5. Find optimal K using Elbow Method
     # -------------------------------------------------------------------------
-    log(f"\nRunning Elbow Method (K from {K_MIN} to {K_MAX})...")
-    K_range = range(K_MIN, K_MAX + 1)
-    inertias = []
+    if BYPASS_ELBOW:
+        optimal_k = FIXED_K
+        log(f"\nElbow method bypassed. Using fixed K={optimal_k}")
+    else:
+        log(f"\nRunning Elbow Method (K from {K_MIN} to {K_MAX})...")
+        K_range = range(K_MIN, K_MAX + 1)
+        inertias = []
 
-    for k in K_range:
-        kmeans = KMeans(n_clusters=k, random_state=RANDOM_STATE, n_init=10)
-        kmeans.fit(geo_features)
-        inertias.append(kmeans.inertia_)
-        log(f"  K={k}: inertia={kmeans.inertia_:.2f}")
+        for k in K_range:
+            kmeans = KMeans(n_clusters=k, random_state=RANDOM_STATE, n_init=10)
+            kmeans.fit(geo_features)
+            inertias.append(kmeans.inertia_)
+            log(f"  K={k}: inertia={kmeans.inertia_:.2f}")
 
-    # Detect elbow point
-    optimal_k = detect_elbow(inertias)
-    log(f"\nOptimal K determined: {optimal_k}")
+        # Detect elbow point
+        optimal_k = detect_elbow(inertias)
+        log(f"\nOptimal K determined: {optimal_k}")
 
-    # Plot elbow curve
-    plot_elbow(K_range, inertias, optimal_k, ELBOW_PLOT)
+        # Plot elbow curve
+        plot_elbow(K_range, inertias, optimal_k, ELBOW_PLOT)
 
     # -------------------------------------------------------------------------
     # 5. Final K-Means clustering with optimal K

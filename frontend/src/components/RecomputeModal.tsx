@@ -13,6 +13,8 @@ interface ClusterParams {
   min_events: number;
   year_span: number;
   smooth_factor: number;
+  bypass_elbow: boolean;
+  fixed_k: number;
 }
 
 interface RecomputeModalProps {
@@ -61,6 +63,12 @@ const PARAM_CONFIG: ParamConfig[] = [
     min: 20, max: 150, step: 1, color: "cyan"
   },
   {
+    key: "fixed_k",
+    label: "Fixed Cluster Count (K)",
+    description: "Number of clusters to generate directly when Elbow Method is bypassed.",
+    min: 1, max: 150, step: 1, color: "cyan"
+  },
+  {
     key: "min_events",
     label: "Min Events per Cluster",
     description: "Clusters with fewer events than this threshold are discarded.",
@@ -93,14 +101,14 @@ const PARAM_CONFIG: ParamConfig[] = [
 ];
 
 const COLOR_MAP: Record<string, { track: string; thumb: string; text: string; bg: string }> = {
-  amber:  { track: "bg-amber-950/40",  thumb: "accent-amber-400",  text: "text-amber-400",  bg: "bg-amber-500/10 border-amber-500/20" },
+  amber: { track: "bg-amber-950/40", thumb: "accent-amber-400", text: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
   purple: { track: "bg-purple-950/40", thumb: "accent-purple-400", text: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
-  cyan:   { track: "bg-cyan-950/40",   thumb: "accent-cyan-400",   text: "text-cyan-400",   bg: "bg-cyan-500/10 border-cyan-500/20" },
-  green:  { track: "bg-green-950/40",  thumb: "accent-green-400",  text: "text-green-400",  bg: "bg-green-500/10 border-green-500/20" },
-  sky:    { track: "bg-sky-950/40",    thumb: "accent-sky-400",    text: "text-sky-400",    bg: "bg-sky-500/10 border-sky-500/20" },
-  pink:   { track: "bg-pink-950/40",   thumb: "accent-pink-400",   text: "text-pink-400",   bg: "bg-pink-500/10 border-pink-500/20" },
+  cyan: { track: "bg-cyan-950/40", thumb: "accent-cyan-400", text: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/20" },
+  green: { track: "bg-green-950/40", thumb: "accent-green-400", text: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
+  sky: { track: "bg-sky-950/40", thumb: "accent-sky-400", text: "text-sky-400", bg: "bg-sky-500/10 border-sky-500/20" },
+  pink: { track: "bg-pink-950/40", thumb: "accent-pink-400", text: "text-pink-400", bg: "bg-pink-500/10 border-pink-500/20" },
   orange: { track: "bg-orange-950/40", thumb: "accent-orange-400", text: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/20" },
-  slate:  { track: "bg-slate-800/40",  thumb: "accent-slate-400",  text: "text-slate-400",  bg: "bg-slate-800/40 border-slate-600/30" },
+  slate: { track: "bg-slate-800/40", thumb: "accent-slate-400", text: "text-slate-400", bg: "bg-slate-800/40 border-slate-600/30" },
 };
 
 export default function RecomputeModal({ isOpen, onClose, onConfirm, currentParams, systemDefaults }: RecomputeModalProps) {
@@ -121,7 +129,7 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, currentPara
 
   if (!isOpen) return null;
 
-  const handleChange = (key: keyof ClusterParams, value: number) => {
+  const handleChange = (key: keyof ClusterParams, value: number | boolean) => {
     setParams(prev => ({ ...prev, [key]: value }));
   };
 
@@ -175,7 +183,35 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, currentPara
 
         {/* Scrollable params */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-5 flex flex-col gap-4">
-          {PARAM_CONFIG.map((config) => {
+
+          {/* Bypass Elbow Toggle Switch */}
+          <div className="p-4 rounded-xl border bg-cyan-950/20 border-cyan-500/20 flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-bold text-cyan-400">Bypass Elbow Method (Fixed K)</span>
+              <span className="text-[10px] text-slate-400 leading-relaxed max-w-md">
+                Enable to skip the K-Means Elbow search and partition the data into a fixed number of clusters directly.
+              </span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={params.bypass_elbow}
+                onChange={(e) => handleChange("bypass_elbow", e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500 peer-checked:after:bg-white"></div>
+            </label>
+          </div>
+
+          {PARAM_CONFIG.filter(config => {
+            if (config.key === "k_min" || config.key === "k_max") {
+              return !params.bypass_elbow;
+            }
+            if (config.key === "fixed_k") {
+              return params.bypass_elbow;
+            }
+            return true;
+          }).map((config) => {
             const value = params[config.key] as number;
             const colors = COLOR_MAP[config.color] || COLOR_MAP.slate;
             return (
@@ -217,7 +253,7 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, currentPara
           <div className="p-4 rounded-xl bg-white/2 border border-white/5 flex gap-3 items-start">
             <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <p className="text-[10px] text-slate-400 leading-relaxed">
-              Recomputing clusters processes the full earthquake database, runs K-Means elbow detection, and performs spatial joins on 394 Indonesian administrative boundaries. This takes approximately <span className="text-slate-300 font-semibold">10–15 seconds</span>.
+              Recomputing clusters processes the full earthquake database, runs K-Means {params.bypass_elbow ? "clustering directly" : "elbow detection"}, and performs spatial joins on 394 Indonesian administrative boundaries. This takes approximately <span className="text-slate-300 font-semibold">10–15 seconds</span>.
             </p>
           </div>
         </div>

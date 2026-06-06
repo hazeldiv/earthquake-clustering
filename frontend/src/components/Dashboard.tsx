@@ -33,6 +33,8 @@ interface ClusterParams {
   min_events: number;
   year_span: number;
   smooth_factor: number;
+  bypass_elbow: boolean;
+  fixed_k: number;
 }
 
 // Load Map component dynamically with SSR disabled to prevent Leaflet window reference errors
@@ -100,12 +102,14 @@ export default function Dashboard() {
   const [defaultParams, setDefaultParams] = useState<ClusterParams>({
     k_min: 72, k_max: 96, random_state: 42,
     mag_threshold: 5.0, depth_threshold: 50.0,
-    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50
+    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50,
+    bypass_elbow: false, fixed_k: 75
   });
   const [currentParams, setCurrentParams] = useState<ClusterParams>({
     k_min: 72, k_max: 96, random_state: 42,
     mag_threshold: 5.0, depth_threshold: 50.0,
-    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50
+    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50,
+    bypass_elbow: false, fixed_k: 75
   });
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";

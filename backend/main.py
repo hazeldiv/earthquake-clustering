@@ -34,6 +34,8 @@ class ClusterParams(BaseModel):
     min_events: Optional[int] = DEFAULT_PARAMS["min_events"]
     year_span: Optional[int] = DEFAULT_PARAMS["year_span"]
     smooth_factor: Optional[int] = DEFAULT_PARAMS["smooth_factor"]
+    bypass_elbow: Optional[bool] = DEFAULT_PARAMS["bypass_elbow"]
+    fixed_k: Optional[int] = DEFAULT_PARAMS["fixed_k"]
 
 @app.on_event("startup")
 def startup_event():
@@ -83,6 +85,8 @@ def trigger_recompute(params: ClusterParams, background_tasks: BackgroundTasks):
             min_events=params.min_events,
             year_span=params.year_span,
             smooth_factor=params.smooth_factor,
+            bypass_elbow=params.bypass_elbow,
+            fixed_k=params.fixed_k,
         )
         print("[API] Background recomputation finished.")
         
