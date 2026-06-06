@@ -19,7 +19,8 @@ interface RecomputeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (params: ClusterParams) => void;
-  defaultParams: ClusterParams;
+  currentParams: ClusterParams;
+  systemDefaults: ClusterParams;
 }
 
 interface ParamConfig {
@@ -102,14 +103,14 @@ const COLOR_MAP: Record<string, { track: string; thumb: string; text: string; bg
   slate:  { track: "bg-slate-800/40",  thumb: "accent-slate-400",  text: "text-slate-400",  bg: "bg-slate-800/40 border-slate-600/30" },
 };
 
-export default function RecomputeModal({ isOpen, onClose, onConfirm, defaultParams }: RecomputeModalProps) {
-  const [params, setParams] = useState<ClusterParams>(defaultParams);
+export default function RecomputeModal({ isOpen, onClose, onConfirm, currentParams, systemDefaults }: RecomputeModalProps) {
+  const [params, setParams] = useState<ClusterParams>(currentParams);
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // Reset to defaults whenever the modal opens
+  // Initialize with current active parameters whenever the modal opens
   useEffect(() => {
-    if (isOpen) setParams(defaultParams);
-  }, [isOpen, defaultParams]);
+    if (isOpen) setParams(currentParams);
+  }, [isOpen, currentParams]);
 
   // Close on Escape key
   useEffect(() => {
@@ -124,14 +125,14 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, defaultPara
     setParams(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleReset = () => setParams(defaultParams);
+  const handleReset = () => setParams(systemDefaults);
 
   const formatValue = (config: ParamConfig, value: number) => {
     const display = config.isFloat ? value.toFixed(config.step < 0.1 ? 2 : 1) : String(value);
     return config.unit ? `${display} ${config.unit}` : display;
   };
 
-  const isDirty = JSON.stringify(params) !== JSON.stringify(defaultParams);
+  const isDirty = JSON.stringify(params) !== JSON.stringify(systemDefaults);
 
   return (
     <div
@@ -155,15 +156,14 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, defaultPara
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isDirty && (
-              <button
-                onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all duration-200"
-              >
-                <RotateCcw className="w-3 h-3" />
-                Reset
-              </button>
-            )}
+            <button
+              onClick={handleReset}
+              disabled={!isDirty}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:text-slate-400 disabled:hover:bg-transparent transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset to Defaults
+            </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
@@ -225,14 +225,22 @@ export default function RecomputeModal({ isOpen, onClose, onConfirm, defaultPara
         {/* Footer */}
         <div className="p-4 border-t border-white/5 bg-slate-950/30 flex items-center gap-3 shrink-0">
           <button
+            onClick={handleReset}
+            disabled={!isDirty}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 disabled:opacity-40 disabled:hover:text-slate-400 disabled:hover:bg-transparent border border-white/5 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset to Defaults
+          </button>
+          <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 transition-all duration-200"
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 transition-all duration-200 cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={() => onConfirm(params)}
-            className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#090d16] bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20"
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-[#090d16] bg-cyan-400 hover:bg-cyan-300 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Start Reclustering

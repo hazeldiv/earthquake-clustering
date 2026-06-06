@@ -102,6 +102,11 @@ export default function Dashboard() {
     mag_threshold: 5.0, depth_threshold: 50.0,
     neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50
   });
+  const [currentParams, setCurrentParams] = useState<ClusterParams>({
+    k_min: 72, k_max: 96, random_state: 42,
+    mag_threshold: 5.0, depth_threshold: 50.0,
+    neighbor_distance: 0.3, min_events: 5, year_span: 10, smooth_factor: 50
+  });
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
 
@@ -109,7 +114,10 @@ export default function Dashboard() {
   useEffect(() => {
     fetch(`${API_BASE}/api/defaults`)
       .then(r => r.json())
-      .then(data => setDefaultParams(data))
+      .then(data => {
+        setDefaultParams(data);
+        setCurrentParams(data);
+      })
       .catch(() => { }); // silently fall back to hard-coded defaults
   }, []);
 
@@ -144,6 +152,7 @@ export default function Dashboard() {
   const handleConfirmRecompute = async (params: ClusterParams) => {
     setShowModal(false);
     setRecomputing(true);
+    setCurrentParams(params); // Save customized parameters as the currently active ones
     try {
       const res = await fetch(`${API_BASE}/api/clusters/recompute`, {
         method: "POST",
@@ -553,7 +562,8 @@ export default function Dashboard() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onConfirm={handleConfirmRecompute}
-        defaultParams={defaultParams}
+        currentParams={currentParams}
+        systemDefaults={defaultParams}
       />
 
 

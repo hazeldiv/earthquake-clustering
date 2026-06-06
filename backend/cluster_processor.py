@@ -97,7 +97,7 @@ def filter_scattered_points(df, neighbor_distance, min_neighbors=3):
 
     return df[keep_mask].copy()
 
-def detect_elbow(inertias):
+def detect_elbow(inertias, k_min: int, k_max: int):
     inertias = np.array(inertias)
     n = len(inertias)
     threshold = 0.02
@@ -105,11 +105,11 @@ def detect_elbow(inertias):
     for i in range(1, n - 1):
         relative_decrease = (inertias[i - 1] - inertias[i]) / inertias[i - 1]
         if relative_decrease < threshold:
-            best_k = i + K_MIN
+            best_k = i + k_min
             log(f"Elbow detected at K={best_k} (decrease {relative_decrease:.1%})")
             return best_k
 
-    best_k = K_MAX - 2
+    best_k = k_max - 2
     log(f"No clear elbow, using K={best_k}")
     return best_k
 
@@ -210,7 +210,7 @@ def compute_clusters(
         kmeans.fit(geo_features)
         inertias.append(kmeans.inertia_)
         
-    optimal_k = detect_elbow(inertias)
+    optimal_k = detect_elbow(inertias, k_min, k_max)
     
     log(f"Running final K-Means with K={optimal_k}...")
     kmeans_final = KMeans(n_clusters=optimal_k, random_state=random_state, n_init=10)
