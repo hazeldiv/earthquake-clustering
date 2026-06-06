@@ -119,8 +119,11 @@ export default function Dashboard() {
     fetch(`${API_BASE}/api/defaults`)
       .then(r => r.json())
       .then(data => {
-        setDefaultParams(data);
-        setCurrentParams(data);
+        setDefaultParams(prev => {
+          const merged = { ...prev, ...data };
+          setCurrentParams(merged);
+          return merged;
+        });
       })
       .catch(() => { }); // silently fall back to hard-coded defaults
   }, []);
