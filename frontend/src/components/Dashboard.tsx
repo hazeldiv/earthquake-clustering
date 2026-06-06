@@ -170,7 +170,7 @@ export default function Dashboard() {
         setTimeout(() => {
           fetchClusters(false);
           setRecomputing(false);
-        }, 12000);
+        }, 20000);
       } else {
         throw new Error("Trigger recompute failed");
       }
@@ -583,7 +583,7 @@ export default function Dashboard() {
               Reclustering Earthquakes
             </h3>
             <p className="text-xs text-slate-400 max-w-sm">
-              The K-Means clustering algorithm, B-Spline interpolation, and spatial joins with 394 Indonesian boundary polygons are running. This takes approximately 10–12 seconds.
+              The K-Means clustering algorithm, B-Spline interpolation, and spatial joins with 394 Indonesian boundary polygons are running. This takes approximately 18-20 seconds.
             </p>
           </div>
         </div>
