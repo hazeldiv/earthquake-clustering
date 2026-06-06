@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { 
-  Activity, 
-  Layers, 
-  Filter, 
-  Search, 
-  MapPin, 
-  Clock, 
-  Compass, 
+import {
+  Activity,
+  Layers,
+  Filter,
+  Search,
+  MapPin,
+  Clock,
+  Compass,
   RefreshCw,
   X,
   ChevronRight,
@@ -36,7 +36,7 @@ interface ClusterParams {
 }
 
 // Load Map component dynamically with SSR disabled to prevent Leaflet window reference errors
-const Map = dynamic(() => import("./Map"), { 
+const Map = dynamic(() => import("./Map"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex flex-col items-center justify-center bg-[#090d16] text-slate-400 gap-3">
@@ -75,7 +75,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [recomputing, setRecomputing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Selection & hover state
   const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null);
   const [hoveredClusterId, setHoveredClusterId] = useState<number | null>(null);
@@ -90,7 +90,7 @@ export default function Dashboard() {
       setRightPanelOpen(true);
     }
   }, [selectedClusterId]);
-  
+
   // Filter states
   const [minEvents, setMinEvents] = useState<number>(5);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -110,7 +110,7 @@ export default function Dashboard() {
     fetch(`${API_BASE}/api/defaults`)
       .then(r => r.json())
       .then(data => setDefaultParams(data))
-      .catch(() => {}); // silently fall back to hard-coded defaults
+      .catch(() => { }); // silently fall back to hard-coded defaults
   }, []);
 
   // Fetch cluster data
@@ -171,7 +171,7 @@ export default function Dashboard() {
       // Filter by cluster size
       const matchesEvents = c.event_count >= minEvents;
       // Filter by search query (province or regency name)
-      const matchesSearch = searchQuery === "" || 
+      const matchesSearch = searchQuery === "" ||
         c.kabupaten_kota.some(k => k.toLowerCase().includes(searchQuery.toLowerCase())) ||
         c.provinces.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -192,7 +192,7 @@ export default function Dashboard() {
     const totalClusters = clusters.length;
     const totalEvents = clusters.reduce((acc, c) => acc + c.event_count, 0);
     const highestAvgMag = Math.max(...clusters.map(c => c.avg_magnitude));
-    
+
     // Find the regency appearing most across clusters
     const regencyCounts: { [key: string]: number } = {};
     clusters.forEach(c => {
@@ -253,10 +253,9 @@ export default function Dashboard() {
       </div>
 
       {/* 3. Floating Left Sidebar - Control Panel */}
-      <div className={`absolute top-4 left-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${
-        leftPanelOpen ? "translate-x-0 opacity-100" : "-translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
-      }`}>
-        
+      <div className={`absolute top-4 left-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${leftPanelOpen ? "translate-x-0 opacity-100" : "-translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
+        }`}>
+
         {/* Sidebar Header */}
         <div className="p-5 border-b border-white/5 flex flex-col gap-1.5 bg-slate-950/20">
           <div className="flex items-center gap-2">
@@ -272,7 +271,7 @@ export default function Dashboard() {
             Identifying high-frequency earthquake zones (Magnitude &ge; 5.0) in Indonesia.
           </p>
           <p className="text-[10px] text-slate-500 font-medium mt-1">
-            made by Hazel Div Alden, Vensia Arisaputri, Wayne Giovanno
+            made by Hazel Div Alden, Venesia Arisaputri, Wayne Giovanno
           </p>
         </div>
 
@@ -295,7 +294,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">
-            
+
             {/* Summary Statistics Card */}
             <div className="p-4 bg-slate-950/15 border-b border-white/5 grid grid-cols-2 gap-3 text-xs">
               <div className="p-3 rounded-lg bg-white/3 flex flex-col gap-0.5">
@@ -334,7 +333,7 @@ export default function Dashboard() {
                   className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-900/60 border border-white/5 focus:outline-none focus:border-cyan-500 text-slate-200 transition-colors"
                 />
                 {searchQuery && (
-                  <button 
+                  <button
                     onClick={() => setSearchQuery("")}
                     className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
                   >
@@ -359,25 +358,24 @@ export default function Dashboard() {
                   const isSelected = selectedClusterId === cluster.cluster_id;
                   const isHovered = hoveredClusterId === cluster.cluster_id;
                   const mainKabName = cluster.title.split('(')[1]?.replace(')', '') || cluster.title;
-                  
+
                   return (
                     <div
                       key={cluster.cluster_id}
                       onClick={() => setSelectedClusterId(isSelected ? null : cluster.cluster_id)}
                       onMouseEnter={() => setHoveredClusterId(cluster.cluster_id)}
                       onMouseLeave={() => setHoveredClusterId(null)}
-                      className={`p-3 rounded-xl cursor-pointer border transition-all duration-300 ${
-                        isSelected 
-                          ? "bg-slate-900/80 border-cyan-500/50 shadow-md" 
-                          : isHovered
+                      className={`p-3 rounded-xl cursor-pointer border transition-all duration-300 ${isSelected
+                        ? "bg-slate-900/80 border-cyan-500/50 shadow-md"
+                        : isHovered
                           ? "bg-slate-900/40 border-white/10"
                           : "bg-white/2 border-white/5"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <span 
-                            className="w-2.5 h-2.5 rounded-full inline-block shrink-0" 
+                          <span
+                            className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
                             style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}
                           />
                           <span className="font-bold text-[12px] text-slate-200">
@@ -388,12 +386,12 @@ export default function Dashboard() {
                           {cluster.event_count} events
                         </span>
                       </div>
-                      
+
                       <div className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
                         <span className="truncate">{mainKabName}</span>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-white/5 text-[10px] text-slate-400">
                         <div>
                           <span className="text-[9px] block text-slate-500">10Y Freq</span>
@@ -420,9 +418,8 @@ export default function Dashboard() {
       {/* Left Sidebar Toggle Button */}
       <button
         onClick={() => setLeftPanelOpen(!leftPanelOpen)}
-        className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-r-xl glass border-l-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${
-          leftPanelOpen ? "left-[400px]" : "left-4 rounded-l-xl border-l"
-        }`}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-r-xl glass border-l-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${leftPanelOpen ? "left-[400px]" : "left-4 rounded-l-xl border-l"
+          }`}
         title={leftPanelOpen ? "Collapse Filter Panel" : "Expand Filter Panel"}
       >
         {leftPanelOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -431,121 +428,119 @@ export default function Dashboard() {
       {/* 4. Selected Cluster Details Card (Floating on bottom-right or top-right depending on size) */}
       {selectedCluster && (
         <>
-          <div className={`absolute top-4 right-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${
-            rightPanelOpen ? "translate-x-0 opacity-100" : "translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
-          }`}>
-          
-          {/* Details Header */}
-          <div className="p-4 border-b border-white/5 bg-slate-950/20 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ 
-                  backgroundColor: CLUSTER_COLORS[selectedCluster.cluster_id % CLUSTER_COLORS.length],
-                  boxShadow: `0 0 10px ${CLUSTER_COLORS[selectedCluster.cluster_id % CLUSTER_COLORS.length]}` 
-                }}
-              />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                Cluster {selectedCluster.cluster_id + 1} Details
-              </h2>
-            </div>
-            <button 
-              onClick={() => setSelectedClusterId(null)}
-              className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <div className={`absolute top-4 right-4 bottom-4 w-96 z-10 pointer-events-auto glass rounded-2xl flex flex-col shadow-2xl border-white/10 overflow-hidden transition-all duration-300 ${rightPanelOpen ? "translate-x-0 opacity-100" : "translate-x-[calc(100%+16px)] opacity-0 pointer-events-none"
+            }`}>
 
-          <div className="flex-1 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4">
-            
-            {/* Primary Stats Info */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                <span className="text-slate-400 block mb-0.5">Average Magnitude</span>
-                <span className="text-lg font-bold text-amber-400">M {selectedCluster.avg_magnitude}</span>
+            {/* Details Header */}
+            <div className="p-4 border-b border-white/5 bg-slate-950/20 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{
+                    backgroundColor: CLUSTER_COLORS[selectedCluster.cluster_id % CLUSTER_COLORS.length],
+                    boxShadow: `0 0 10px ${CLUSTER_COLORS[selectedCluster.cluster_id % CLUSTER_COLORS.length]}`
+                  }}
+                />
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Cluster {selectedCluster.cluster_id + 1} Details
+                </h2>
               </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                <span className="text-slate-400 block mb-0.5">Average Depth</span>
-                <span className="text-lg font-bold text-purple-400">{selectedCluster.avg_depth} km</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                <span className="text-slate-400 block mb-0.5">10-Year Frequency</span>
-                <span className="text-lg font-bold text-cyan-400">{selectedCluster.frequency_last_10_years} events</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                <span className="text-slate-400 block mb-0.5">Total Frequency</span>
-                <span className="text-lg font-bold text-slate-200">{selectedCluster.event_count} events</span>
-              </div>
+              <button
+                onClick={() => setSelectedClusterId(null)}
+                className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Affected Regency List */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Compass className="w-3.5 h-3.5 text-cyan-400" /> Intersected Kabupaten/Kota
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedCluster.kabupaten_kota.map((kab, idx) => (
-                  <span 
-                    key={idx} 
-                    className="text-[10px] bg-slate-900/80 px-2.5 py-1 rounded-full text-slate-300 border border-white/5"
-                  >
-                    {kab}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <div className="flex-1 overflow-y-auto no-scrollbar p-4 flex flex-col gap-4">
 
-            {/* Recent Events Feed inside this cluster */}
-            <div className="flex flex-col gap-2 flex-1 overflow-hidden">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-red-400" /> Recent Events in Cluster
-              </span>
-              
-              <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pr-1">
-                {selectedCluster.points.slice(0, 15).map((point, idx) => (
-                  <div 
-                    key={idx}
-                    className="p-2.5 rounded-lg bg-white/2 border border-white/5 flex flex-col gap-1 text-[11px]"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-300">M {point.magnitude}</span>
-                      <span className="text-[9px] text-slate-400">{point.datetime.split(' ')[0]}</span>
+              {/* Primary Stats Info */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                  <span className="text-slate-400 block mb-0.5">Average Magnitude</span>
+                  <span className="text-lg font-bold text-amber-400">M {selectedCluster.avg_magnitude}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                  <span className="text-slate-400 block mb-0.5">Average Depth</span>
+                  <span className="text-lg font-bold text-purple-400">{selectedCluster.avg_depth} km</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                  <span className="text-slate-400 block mb-0.5">10-Year Frequency</span>
+                  <span className="text-lg font-bold text-cyan-400">{selectedCluster.frequency_last_10_years} events</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5">
+                  <span className="text-slate-400 block mb-0.5">Total Frequency</span>
+                  <span className="text-lg font-bold text-slate-200">{selectedCluster.event_count} events</span>
+                </div>
+              </div>
+
+              {/* Affected Regency List */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <Compass className="w-3.5 h-3.5 text-cyan-400" /> Intersected Kabupaten/Kota
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedCluster.kabupaten_kota.map((kab, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[10px] bg-slate-900/80 px-2.5 py-1 rounded-full text-slate-300 border border-white/5"
+                    >
+                      {kab}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Events Feed inside this cluster */}
+              <div className="flex flex-col gap-2 flex-1 overflow-hidden">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-red-400" /> Recent Events in Cluster
+                </span>
+
+                <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-2 pr-1">
+                  {selectedCluster.points.slice(0, 15).map((point, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-lg bg-white/2 border border-white/5 flex flex-col gap-1 text-[11px]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-300">M {point.magnitude}</span>
+                        <span className="text-[9px] text-slate-400">{point.datetime.split(' ')[0]}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                        <span>Depth: {point.depth} km</span>
+                        <span className="truncate max-w-[150px]">{point.kabupaten_kota}</span>
+                      </div>
                     </div>
-                    <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                      <span>Depth: {point.depth} km</span>
-                      <span className="truncate max-w-[150px]">{point.kabupaten_kota}</span>
+                  ))}
+                  {selectedCluster.points.length > 15 && (
+                    <div className="text-center text-[9px] text-slate-500 py-1">
+                      Showing top 15 of {selectedCluster.points.length} events
                     </div>
-                  </div>
-                ))}
-                {selectedCluster.points.length > 15 && (
-                  <div className="text-center text-[9px] text-slate-500 py-1">
-                    Showing top 15 of {selectedCluster.points.length} events
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
+
             </div>
 
-          </div>
-
-          {/* Footer Reset Zoom Button */}
-          <div className="p-4 border-t border-white/5 bg-slate-950/20 flex gap-2">
-            <button
-              onClick={() => setSelectedClusterId(null)}
-              className="flex-1 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300"
-            >
-              Clear Selection
-            </button>
-          </div>
+            {/* Footer Reset Zoom Button */}
+            <div className="p-4 border-t border-white/5 bg-slate-950/20 flex gap-2">
+              <button
+                onClick={() => setSelectedClusterId(null)}
+                className="flex-1 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all duration-300"
+              >
+                Clear Selection
+              </button>
+            </div>
 
           </div>
 
           {/* Right Sidebar Toggle Button */}
           <button
             onClick={() => setRightPanelOpen(!rightPanelOpen)}
-            className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-l-xl glass border-r-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${
-              rightPanelOpen ? "right-[400px]" : "right-4 rounded-r-xl border-r"
-            }`}
+            className={`absolute top-1/2 -translate-y-1/2 z-20 w-8 h-12 flex items-center justify-center rounded-l-xl glass border-r-0 hover:text-cyan-400 text-slate-400 transition-all duration-300 pointer-events-auto cursor-pointer ${rightPanelOpen ? "right-[400px]" : "right-4 rounded-r-xl border-r"
+              }`}
             title={rightPanelOpen ? "Collapse Details Panel" : "Expand Details Panel"}
           >
             {rightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

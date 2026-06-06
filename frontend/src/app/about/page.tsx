@@ -263,88 +263,115 @@ export default function AboutPage() {
                   <p className="text-xs text-slate-400 max-w-md">{metricsError}</p>
                 </div>
               ) : metrics && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-
-                  {/* Inertia */}
-                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-bold text-slate-300">Inertia (WCSS)</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950/40 border border-cyan-500/20 text-cyan-400">
-                        Lower is better
-                      </span>
+                <div className="flex flex-col gap-8">
+                  {/* Elbow Plot Visualization */}
+                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-6 hover:border-purple-500/10 transition-all duration-300">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Clustering Optimization</div>
+                      <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-purple-400" /> Elbow Method (WCSS vs. Number of Clusters)
+                      </h3>
                     </div>
-                    <div className="text-2xl font-black text-cyan-400 my-1 font-mono">
-                      {metrics.inertia.toLocaleString()}
+                    <div className="w-full rounded-xl overflow-hidden border border-white/5 bg-slate-950/40 p-4 flex items-center justify-center">
+                      <img
+                        src="/evaluation_metric/elbow_plot.png"
+                        alt="Elbow Method Plot"
+                        className="max-h-[380px] w-auto object-contain hover:scale-[1.02] transition-transform duration-500 rounded-lg"
+                      />
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Measures the sum of squared distances of samples to their closest cluster center, where lower values indicate tighter, more compact clusters.
-                    </p>
+                    <div className="flex flex-col gap-3">
+                      <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Analysis & Findings:</h4>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        The Elbow Method is a heuristic used to determine the optimal number of clusters <span className="italic font-semibold text-purple-400">K</span>. 
+                        By plotting the Within-Cluster Sum of Squares (WCSS) or Inertia against a range of cluster counts, we seek the "elbow point" — the coordinate where the rate of change of the objective function decreases sharply, representing the point of diminishing returns. 
+                        In our model, the pipeline dynamically evaluates WCSS reductions and identifies the inflection point at <strong className="font-semibold text-slate-200">K = 75</strong>, balancing cluster compactness with model simplicity.
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Silhouette Score */}
-                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-bold text-slate-300">Silhouette Score</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950/40 border border-emerald-500/20 text-emerald-400">
-                        Range: [-1, 1] (Higher is better)
-                      </span>
-                    </div>
-                    <div className="text-2xl font-black text-emerald-400 my-1 font-mono">
-                      {metrics.silhouette}
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Calculates the mean ratio of intra-cluster distance to nearest-cluster distance for each sample, ranging from -1 to 1, where higher values indicate better-defined and well-separated clusters.
-                    </p>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
 
-                  {/* Davies-Bouldin Index */}
-                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-bold text-slate-300">Davies-Bouldin Index</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/40 border border-purple-500/20 text-purple-400">
-                        Lower is better (Min: 0)
-                      </span>
+                    {/* Inertia */}
+                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold text-slate-300">Inertia (WCSS)</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950/40 border border-cyan-500/20 text-cyan-400">
+                          Lower is better
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-cyan-400 my-1 font-mono">
+                        {metrics.inertia.toLocaleString()}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Measures the sum of squared distances of samples to their closest cluster center, where lower values indicate tighter, more compact clusters.
+                      </p>
                     </div>
-                    <div className="text-2xl font-black text-purple-400 my-1 font-mono">
-                      {metrics.davies_bouldin}
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Computes the average similarity ratio between each cluster and its most similar one, where lower values (minimum 0) indicate better clustering with lower intra-cluster distance and higher inter-cluster separation.
-                    </p>
-                  </div>
 
-                  {/* Calinski-Harabasz Index */}
-                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-bold text-slate-300">Calinski-Harabasz Index</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/40 border border-amber-500/20 text-amber-400">
-                        Higher is better
-                      </span>
+                    {/* Silhouette Score */}
+                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold text-slate-300">Silhouette Score</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950/40 border border-emerald-500/20 text-emerald-400">
+                          Range: [-1, 1] (Higher is better)
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-emerald-400 my-1 font-mono">
+                        {metrics.silhouette}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Calculates the mean ratio of intra-cluster distance to nearest-cluster distance for each sample, ranging from -1 to 1, where higher values indicate better-defined and well-separated clusters.
+                      </p>
                     </div>
-                    <div className="text-2xl font-black text-amber-400 my-1 font-mono">
-                      {metrics.calinski_harabasz.toLocaleString()}
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Computes the ratio of the sum of between-clusters dispersion and of within-cluster dispersion, where higher values indicate that clusters are dense and well-separated.
-                    </p>
-                  </div>
 
-                  {/* Dunn Index */}
-                  <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3 md:col-span-2">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-sm font-bold text-slate-300">Dunn Index</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-sky-950/40 border border-sky-500/20 text-sky-400">
-                        Higher is better
-                      </span>
+                    {/* Davies-Bouldin Index */}
+                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold text-slate-300">Davies-Bouldin Index</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/40 border border-purple-500/20 text-purple-400">
+                          Lower is better (Min: 0)
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-purple-400 my-1 font-mono">
+                        {metrics.davies_bouldin}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Computes the average similarity ratio between each cluster and its most similar one, where lower values (minimum 0) indicate better clustering with lower intra-cluster distance and higher inter-cluster separation.
+                      </p>
                     </div>
-                    <div className="text-2xl font-black text-sky-400 my-1 font-mono">
-                      {metrics.dunn}
-                    </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Measures the ratio of the minimum distance between points in different clusters to the maximum diameter of any cluster, where higher values indicate compact clusters that are far apart from each other.
-                    </p>
-                  </div>
 
+                    {/* Calinski-Harabasz Index */}
+                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold text-slate-300">Calinski-Harabasz Index</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-amber-950/40 border border-amber-500/20 text-amber-400">
+                          Higher is better
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-amber-400 my-1 font-mono">
+                        {metrics.calinski_harabasz.toLocaleString()}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Computes the ratio of the sum of between-clusters dispersion and of within-cluster dispersion, where higher values indicate that clusters are dense and well-separated.
+                      </p>
+                    </div>
+
+                    {/* Dunn Index */}
+                    <div className="p-6 rounded-2xl glass border-white/5 flex flex-col gap-3 md:col-span-2">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm font-bold text-slate-300">Dunn Index</h3>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-sky-950/40 border border-sky-500/20 text-sky-400">
+                          Higher is better
+                        </span>
+                      </div>
+                      <div className="text-2xl font-black text-sky-400 my-1 font-mono">
+                        {metrics.dunn}
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Measures the ratio of the minimum distance between points in different clusters to the maximum diameter of any cluster, where higher values indicate compact clusters that are far apart from each other.
+                      </p>
+                    </div>
+
+                  </div>
                 </div>
               )}
             </div>
